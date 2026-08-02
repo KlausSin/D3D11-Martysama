@@ -34,6 +34,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -113,6 +114,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -238,6 +240,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 // Native DX11 multi-light constant buffer
@@ -344,6 +347,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -699,6 +703,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -774,6 +779,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -934,6 +940,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -1068,6 +1075,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -1411,6 +1419,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 #ifdef WATER_REFLECTION_ENABLED
@@ -1714,6 +1723,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -1791,6 +1801,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 cbuffer CBSkyGradient : register(b2)
@@ -1969,6 +1980,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -2012,6 +2024,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct PS_INPUT
@@ -2028,48 +2041,18 @@ float4 main(PS_INPUT input) : SV_TARGET
 
 
 	float4 finalColor;
-	float colorOp = vMaterialParams.w;
+	uint colorOp = (uint)(vParticleParams.x + 0.5f);
 
-	if (colorOp < -0.5f)
+	finalColor.a = texColor.a * input.Color.a;
+	switch (colorOp)
 	{
-		// DISABLE: discard this pixel (make fully transparent)
-		discard;
-	}
-	else if (colorOp > 4.5f)
-	{
-		// ADD: texture + factor (clamped)
-		finalColor.rgb = saturate(texColor.rgb + input.Color.rgb);
-		finalColor.a = texColor.a * input.Color.a;
-	}
-	else if (colorOp > 3.5f)
-	{
-		// MODULATE4X: (texture * factor) * 4
-		finalColor.rgb = saturate(texColor.rgb * input.Color.rgb * 4.0f);
-		finalColor.a = texColor.a * input.Color.a;
-	}
-	else if (colorOp > 2.5f)
-	{
-		// MODULATE2X: (texture * factor) * 2
-		finalColor.rgb = saturate(texColor.rgb * input.Color.rgb * 2.0f);
-		finalColor.a = texColor.a * input.Color.a;
-	}
-	else if (colorOp > 1.5f)
-	{
-		// SELECTARG2: texture color only
-		finalColor.rgb = texColor.rgb;
-		finalColor.a = texColor.a * input.Color.a;
-	}
-	else if (colorOp > 0.5f)
-	{
-		// SELECTARG1: factor color only
-		finalColor.rgb = input.Color.rgb;
-		finalColor.a = texColor.a * input.Color.a;
-	}
-	else
-	{
-		// MODULATE (default): texture * factor
-		finalColor.rgb = texColor.rgb * input.Color.rgb;
-		finalColor.a = texColor.a * input.Color.a;
+	case 1:  discard; break;
+	case 2:  finalColor.rgb = input.Color.rgb; break;
+	case 3:  finalColor.rgb = texColor.rgb; break;
+	case 5:  finalColor.rgb = saturate(texColor.rgb * input.Color.rgb * 2.0f); break;
+	case 6:  finalColor.rgb = saturate(texColor.rgb * input.Color.rgb * 4.0f); break;
+	case 7:  finalColor.rgb = saturate(texColor.rgb + input.Color.rgb); break;
+	default: finalColor.rgb = texColor.rgb * input.Color.rgb; break;
 	}
 
 	if (finalColor.a < 0.004f)  // ~1/255, essentially zero alpha
@@ -2106,6 +2089,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -2459,6 +2443,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -2501,6 +2486,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2555,6 +2541,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 cbuffer CBSkinning : register(b3)
@@ -2630,6 +2617,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2684,6 +2672,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 // SpeedTree-specific constant buffer
@@ -2780,6 +2769,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2922,6 +2912,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2986,6 +2977,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct VS_INPUT
@@ -3070,6 +3062,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 cbuffer CBLighting : register(b2)
@@ -3233,6 +3226,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 // Native DX11 multi-light constant buffer
@@ -3392,6 +3386,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -4160,6 +4155,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -4276,6 +4272,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 cbuffer CBLighting : register(b2)
@@ -4454,6 +4451,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D<float4> texInstanceData : register(t8);
@@ -4510,6 +4508,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -4567,6 +4566,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D<float4> texInstanceData : register(t8);
@@ -4659,6 +4659,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -4727,6 +4728,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 // VTF instance data texture (bound to VS t8)
@@ -4816,6 +4818,7 @@ cbuffer CBPerObject : register(b1)
 	float4 vPBRParams;
 	float4 vRenderFlags;
 	float4 vParticleColor;
+	float4 vParticleParams;
 };
 
 struct Light
@@ -5194,6 +5197,7 @@ CShaderManager::CShaderManager()
 	m_cbPerObject.vDiffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_cbPerObject.vSkyTint = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_cbPerObject.vParticleColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_cbPerObject.vParticleParams = XMFLOAT4((float)PARTICLE_COLOROP_MODULATE, 0.0f, 0.0f, 0.0f);
 	m_cbPerObject.vSpecularColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 32.0f);  // RGB = color, A = power
 	m_cbPerObject.vEmissiveColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	m_cbPerObject.vMaterialParams = XMFLOAT4(0.0f, 0.0f, 32.0f, 0.0f);
@@ -6751,46 +6755,11 @@ bool CShaderManager::IsTwoTextureBlendEnabled() const
 
 void CShaderManager::SetParticleColorOp(BYTE byColorOp)
 {
-	// Map texture-op values to shader float values:
-	// ARG1 = factor, ARG2 = texture
-	//   DISABLE (1) -> -1.0 (disable texture stage, use factor only with zero alpha)
-	//   SELECTARG1 (2) -> 1.0 (factor/color only, ARG1=TFACTOR)
-	//   SELECTARG2 (3) -> 2.0 (texture only, ARG2=TEXTURE)
-	//   MODULATE (4) -> 0.0 (texture * factor - default)
-	//   MODULATE2X (5) -> 3.0 (texture * factor * 2)
-	//   MODULATE4X (6) -> 4.0 (texture * factor * 4)
-	//   ADD (7) -> 5.0 (texture + factor)
-	//   Other values -> 0.0 (fallback to modulate)
-	float fColorOp = 0.0f;
-	switch (byColorOp)
-	{
-	case 1:  // DISABLE - disables texture stage output
-		fColorOp = -1.0f;
-		break;
-	case 2:  // SELECTARG1
-		fColorOp = 1.0f;
-		break;
-	case 3:  // SELECTARG2
-		fColorOp = 2.0f;
-		break;
-	case 5:  // MODULATE2X
-		fColorOp = 3.0f;
-		break;
-	case 6:  // MODULATE4X
-		fColorOp = 4.0f;
-		break;
-	case 7:  // ADD
-		fColorOp = 5.0f;
-		break;
-	case 4:  // MODULATE
-	default:
-		fColorOp = 0.0f;
-		break;
-	}
-		if (m_cbPerObject.vMaterialParams.w == fColorOp)
-			return;
-		m_cbPerObject.vMaterialParams.w = fColorOp;
-		m_bPerObjectDirty = true;
+	const float v = (float)byColorOp;
+	if (m_cbPerObject.vParticleParams.x == v)
+		return;
+	m_cbPerObject.vParticleParams.x = v;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetMaterialParams(float x, float y, float z, float w)

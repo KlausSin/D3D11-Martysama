@@ -73,6 +73,18 @@ enum EShaderType
 //////////////////////////////////////////////////////////////////////////
 // Compute Shader Type Enumeration
 //////////////////////////////////////////////////////////////////////////
+// Particle colour operation (values come straight from the effect data)
+enum EParticleColorOp
+{
+	PARTICLE_COLOROP_DISABLE    = 1,
+	PARTICLE_COLOROP_SELECTARG1 = 2,
+	PARTICLE_COLOROP_SELECTARG2 = 3,
+	PARTICLE_COLOROP_MODULATE   = 4,
+	PARTICLE_COLOROP_MODULATE2X = 5,
+	PARTICLE_COLOROP_MODULATE4X = 6,
+	PARTICLE_COLOROP_ADD        = 7,
+};
+
 enum EComputeShader
 {
 	CS_PARTICLE_BILLBOARD,  // Generate particle billboard quads on GPU
@@ -169,6 +181,7 @@ __declspec(align(16)) struct CBPerObject
 	XMFLOAT4 vPBRParams;       // x = roughness, y = metallic, z = specular scale, w = specular power
 	XMFLOAT4 vRenderFlags;     // x = character shadow depth pass, yzw unused
 	XMFLOAT4 vParticleColor;   // per-draw particle colour (SHADER_PARTICLE)
+	XMFLOAT4 vParticleParams;  // x = EParticleColorOp, yzw unused
 };
 
 // SpeedTree constants - wind matrices and tree data
