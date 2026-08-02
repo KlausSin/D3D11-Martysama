@@ -1,0 +1,42 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.aps
+*.ncb
+*.sdf
+*.opendb
+*.VC.db
+*.VC.opendb
+
+# Build output directories
+Debug/
+Release/
+Distribute/
+x64/
+Win32/
+bin/
+obj/
+ipch/
+
+# Build artifacts
+*.exe
+*.dll
+*.lib
+*.pdb
+*.pch
+*.ipch
+*.idb
+*.obj
+*.sbr
+*.bsc
+*.ilk
+*.exp
+*.map
+*.res
+*.tlog
+*.log
+*.lastbuildstate
+*.recipe
+*.CppClean.log
+*.FileListAbsolute.txt
