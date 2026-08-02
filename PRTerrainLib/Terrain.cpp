@@ -315,10 +315,10 @@ DWORD CTerrainImpl::GetShadowMapColor(float fx, float fy)
 
 	WORD w = *(m_awShadowMap + (iy * SHADOWMAP_XSIZE) + ix);
 
-	int b = w & 0x1f; w >>= 5; b <<= 3;
-	int g = w & 0x1f; w >>= 5; g <<= 3;
-	int r = w & 0x1f;		   r <<= 3;
+	int r = ((w >> 11) & 0x1f) << 3;
+	int g = ((w >> 5) & 0x3f) << 2;
+	int b = (w & 0x1f) << 3;
 
-	return (DWORD) (0xff << 24) | (g << 16) | (g << 8) | r;
+	return (DWORD) (0xff << 24) | (r << 16) | (g << 8) | b;
 }
 //martysama0134's dcf42890919f0da1c0e6dbb7f15bc7ec

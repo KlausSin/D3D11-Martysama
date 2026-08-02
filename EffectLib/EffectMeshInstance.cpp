@@ -167,13 +167,15 @@ void CEffectMeshInstance::OnRender()
 		if (fFinalAlpha < 0.004f)  // ~1/255, essentially invisible
 			continue;
 
+		ID3D11ShaderResourceView * pEffectTexture = NULL;
 		DWORD dwcurTextureFrame = rTextureFrameController.GetCurrentFrame();
 		if (dwcurTextureFrame < m_TextureInstanceVector[i].TextureInstanceVector.size())
 		{
 			CGraphicImageInstance * pImageInstance = m_TextureInstanceVector[i].TextureInstanceVector[dwcurTextureFrame];
 			if (pImageInstance && pImageInstance->GetTexturePointer())
-				SHADERMANAGER.SetShaderResource(0, pImageInstance->GetTexturePointer()->GetD3DTexture());
+				pEffectTexture = pImageInstance->GetTexturePointer()->GetD3DTexture();
 		}
+		SHADERMANAGER.SetShaderResource(0, pEffectTexture);
 
 		int iBlendingSrcType = m_pMeshScript->GetBlendingSrcType(i);
 		if (iBlendingSrcType == BLEND_ONE)

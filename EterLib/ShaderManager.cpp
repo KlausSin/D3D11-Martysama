@@ -5102,6 +5102,7 @@ CShaderManager::CShaderManager()
 	, m_bFogEnabled(false)
 	, m_bAlphaTestEnabled(false)
 	, m_dwAlphaTestRef(0)
+	, m_bTwoTextureBlend(false)
 	, m_dwSkyTint(0xFFFFFFFF)
 	, m_dwParticleColor(0xFFFFFFFF)
 	, m_dwDynamicVBOffset(0)
@@ -6742,15 +6743,18 @@ void CShaderManager::SetEmissiveColor(float r, float g, float b)
 
 void CShaderManager::SetTwoTextureBlend(bool bEnabled)
 {
+	m_bTwoTextureBlend = bEnabled;
+
 	float v = bEnabled ? 1.0f : 0.0f;
-		if (m_cbPerObject.vMaterialParams.w == v) return;
-		m_cbPerObject.vMaterialParams.w = v;
-		m_bPerObjectDirty = true;
+	if (m_cbPerObject.vMaterialParams.w == v)
+		return;
+	m_cbPerObject.vMaterialParams.w = v;
+	m_bPerObjectDirty = true;
 }
 
 bool CShaderManager::IsTwoTextureBlendEnabled() const
 {
-	return m_cbPerObject.vMaterialParams.w > 0.5f;
+	return m_bTwoTextureBlend;
 }
 
 void CShaderManager::SetParticleColorOp(BYTE byColorOp)

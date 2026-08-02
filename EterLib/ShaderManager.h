@@ -1077,6 +1077,7 @@ private:
 	ID3D11ShaderResourceView* m_pTextures[STATEMANAGER_MAX_STAGES];
 
 	// Texture factor color
+	bool                      m_bTwoTextureBlend;
 	DWORD                     m_dwSkyTint;
 	DWORD                     m_dwParticleColor;
 

@@ -431,26 +431,6 @@ void CGrannyMaterial::__ApplySpecularRenderState()
 		SHADERMANAGER.SetSpecularTune(s_fSpecIntensity, s_fSpecPower);
 	}
 
-	if (!SHADERMANAGER.IsTwoTextureBlendEnabled())
-	{
-		CGraphicTexture* pkTexture=ms_akSphereMapInstance[m_bSphereMapIndex].GetTexturePointer();
-
-		if (pkTexture)
-			SHADERMANAGER.SetShaderResource(1, pkTexture->GetD3DTexture());
-		else
-			SHADERMANAGER.SetShaderResource(1, NULL);
-
-		if (SHADERMANAGER.IsInitialized())
-		{
-			SHADERMANAGER.SetSpecularColor(g_fSpecularColor.r, g_fSpecularColor.g, g_fSpecularColor.b);
-			SHADERMANAGER.SetSpecularPower(__GetSpecularPower());
-		}
-
-		SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &ms_matSpecular);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_WRAP);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_WRAP);
-	}
-
 	// PBR: sphere-mapped materials have slight metallic hint
 	SHADERMANAGER.SetPBRMetallic(0.15f);
 
@@ -471,12 +451,6 @@ void CGrannyMaterial::__RestoreSpecularRenderState()
 
 	// PBR: reset metallic
 	SHADERMANAGER.SetPBRMetallic(0.0f);
-
-	if (!SHADERMANAGER.IsTwoTextureBlendEnabled())
-	{
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
-	}
 
 	if (m_bTwoSideRender)
 	{
