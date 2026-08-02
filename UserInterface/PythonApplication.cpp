@@ -300,7 +300,7 @@ void CPythonApplication::RenderGame()
 			SHADERMANAGER.SetAlphaTest(false, 0.0f);
 			SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 			SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-			SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+			SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
 			QueryPerformanceCounter(&tB);
 			SHADERMANAGER.cpuMs_Misc = qpcUsST(tA, tB) / 1000.0;
@@ -388,7 +388,7 @@ void CPythonApplication::RenderGame()
 	SHADERMANAGER.SetAlphaTest(false, 0.0f);
 	SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
 	if (GetAsyncKeyState(VK_Z))
 		SHADERMANAGER.SetPipelineState(PSTATE_FILLMODE, FILL_SOLID);

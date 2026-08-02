@@ -193,7 +193,7 @@ inline void BeginShaderSpeedTreeRender(float windStrength = 1.0f)
 		// Set wind strength via material params z component
 		SHADERMANAGER.SetMaterial(windStrength);  // Using specular power slot for wind
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 	}
 }
 

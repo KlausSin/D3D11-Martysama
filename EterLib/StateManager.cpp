@@ -20,7 +20,7 @@ CStateManager::CStateManager(ID3D11Device* pDevice, ID3D11DeviceContext* pContex
 	, m_bAlphaTestEnabled(false)
 	, m_fAlphaRef(0.0f)
 	, m_bLightingEnabled(false)  // lighting disabled by default
-	, m_dwTextureFactor(0xFFFFFFFF)
+	, m_dwParticleColor(0xFFFFFFFF)
 	, m_InputLayout(INPUT_LAYOUT_PDT)
 	, m_SavedInputLayout(INPUT_LAYOUT_PDT)
 	, m_pSavedVertexShader(nullptr)
@@ -479,12 +479,12 @@ void CStateManager::SetLightingEnabled(bool bEnable)
 	}
 }
 
-void CStateManager::SetTextureFactor(DWORD dwColor)
+void CStateManager::SetParticleColor(DWORD dwColor)
 {
-	m_dwTextureFactor = dwColor;
+	m_dwParticleColor = dwColor;
 	if (SHADERMANAGER.IsInitialized())
 	{
-		SHADERMANAGER.SetTextureFactor(m_dwTextureFactor);
+		SHADERMANAGER.SetParticleColor(m_dwParticleColor);
 	}
 }
 

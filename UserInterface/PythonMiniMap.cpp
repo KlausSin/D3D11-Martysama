@@ -274,8 +274,8 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
 
 
-	DWORD dwSavedTextureFactor1 = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(0xFF000000);
+	DWORD dwSavedParticleColor1 = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(0xFF000000);
 
 	SHADERMANAGER.SetShaderResource(1, m_MiniMapFilterGraphicImageInstance.GetTexturePointer()->GetD3DTexture());
 	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &m_matMiniMapCover);
@@ -305,7 +305,7 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 		}
 	}
 
-	SHADERMANAGER.SetTextureFactor(dwSavedTextureFactor1);
+	SHADERMANAGER.SetParticleColor(dwSavedParticleColor1);
 
 	SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
 	SHADERMANAGER.SetShaderResource(1, NULL);
@@ -318,8 +318,8 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 	SetDiffuseOperation();
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matIdentity);
 
-	DWORD dwSavedTextureFactor2 = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+	DWORD dwSavedParticleColor2 = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
 	TInstancePositionVectorIterator aIterator;
 
@@ -393,7 +393,7 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 		++aIterator;
 	}
 
-	SHADERMANAGER.SetTextureFactor(dwSavedTextureFactor2);
+	SHADERMANAGER.SetParticleColor(dwSavedParticleColor2);
 
 	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MIPFILTER);
 	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
@@ -968,8 +968,8 @@ void CPythonMiniMap::RenderAtlas(float fScreenX, float fScreenY)
 	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MAGFILTER, FILTER_POINT);
 	m_AtlasImageInstance.Render();
 
-	DWORD dwSavedTextureFactor = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+	DWORD dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
 	const Color & c_rAtlasNPCColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_NPC);
 	m_AtlasMarkInfoVectorIterator = m_AtlasNPCInfoVector.begin();
@@ -996,7 +996,7 @@ void CPythonMiniMap::RenderAtlas(float fScreenX, float fScreenY)
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
 
-	SHADERMANAGER.SetTextureFactor(CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WAYPOINT));
+	SHADERMANAGER.SetParticleColor(CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WAYPOINT));
 	m_AtlasMarkInfoVectorIterator = m_AtlasWayPointInfoVector.begin();
 	for (; m_AtlasMarkInfoVectorIterator != m_AtlasWayPointInfoVector.end(); ++m_AtlasMarkInfoVectorIterator)
 	{
@@ -1017,7 +1017,7 @@ void CPythonMiniMap::RenderAtlas(float fScreenX, float fScreenY)
 		}
 	}
 
-	SHADERMANAGER.SetTextureFactor(dwSavedTextureFactor);
+	SHADERMANAGER.SetParticleColor(dwSavedParticleColor);
 
 	if ((ELTimer_GetMSec() / 500) % 2)
 		m_AtlasPlayerMark.Render();

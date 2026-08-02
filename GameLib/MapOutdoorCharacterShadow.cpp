@@ -176,7 +176,7 @@ void CMapOutdoor::ReleaseCharacterShadowTexture()
 }
 
 DWORD dwLightEnable = FALSE;
-DWORD dwSavedTextureFactor = 0xFFFFFFFF;
+DWORD dwSavedParticleColor = 0xFFFFFFFF;
 
 bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 {
@@ -335,8 +335,8 @@ bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 	dwLightEnable = SHADERMANAGER.GetLightingEnabled() ? TRUE : FALSE;
 	SHADERMANAGER.SetLightingEnabled(false);
 
-	dwSavedTextureFactor = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(0xFF808080);
+	dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(0xFF808080);
 	SHADERMANAGER.SetCharacterShadowPass(true);
 
 	BeginShaderShadowRender();
@@ -403,7 +403,7 @@ void CMapOutdoor::EndRenderCharacterShadowToTexture()
 	SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
 
 	SHADERMANAGER.SetLightingEnabled(dwLightEnable != FALSE);
-	SHADERMANAGER.SetTextureFactor(dwSavedTextureFactor);
+	SHADERMANAGER.SetParticleColor(dwSavedParticleColor);
 	SHADERMANAGER.SetCharacterShadowPass(false);
 }
 

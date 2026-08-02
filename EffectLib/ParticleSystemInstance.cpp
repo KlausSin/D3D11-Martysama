@@ -459,7 +459,7 @@ void CParticleSystemInstance::FlushParticleBatch()
 			if (isEnd || colorChanged)
 			{
 				UINT groupSize = (UINT)(i - groupStart);
-				SHADERMANAGER.SetTextureFactor(currentColor);
+				SHADERMANAGER.SetParticleColor(currentColor);
 				SHADERMANAGER.DrawBatchedQuads(stride, vbByteOffset, (UINT)groupStart, groupSize);
 
 				if (!isEnd)

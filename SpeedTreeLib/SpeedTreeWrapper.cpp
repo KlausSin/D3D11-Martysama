@@ -224,7 +224,7 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
 	EndLeafForTreeType();
 
 	// Billboards use particle shader
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);  // White - billboards use per-vertex color
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);  // White - billboards use per-vertex color
 	SHADERMANAGER.BeginParticle();
 	RenderBillboards();
 
@@ -291,7 +291,7 @@ void CSpeedTreeWrapper::OnRender()
 	EndLeafForTreeType();
 
 	// Billboards use particle shader
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);  // White - billboards use per-vertex color
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);  // White - billboards use per-vertex color
 	SHADERMANAGER.BeginParticle();
 	RenderBillboards();
 

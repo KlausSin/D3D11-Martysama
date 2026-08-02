@@ -240,7 +240,7 @@ void CSphereCollisionInstance::Render(EFillMode d3dFillMode)
 {
 	static CScreen s;
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xffffffff);
+		SHADERMANAGER.SetParticleColor(0xffffffff);
 	s.RenderSphere(NULL, m_attribute.v3Position.x, m_attribute.v3Position.y, m_attribute.v3Position.z, m_attribute.fRadius, d3dFillMode);
 }
 
@@ -505,7 +505,7 @@ void CCylinderCollisionInstance::Render(EFillMode d3dFillMode)
 {
 	static CScreen s;
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xffffffff);
+		SHADERMANAGER.SetParticleColor(0xffffffff);
 	s.RenderCylinder(NULL, m_attribute.v3Position.x, m_attribute.v3Position.y, m_attribute.v3Position.z+m_attribute.fHeight/2, m_attribute.fRadius, m_attribute.fHeight, d3dFillMode);
 }
 
@@ -653,7 +653,7 @@ void CAABBCollisionInstance::Render(EFillMode d3dFillMode)
 {
 	static CScreen s;
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xffffffff);
+		SHADERMANAGER.SetParticleColor(0xffffffff);
 	s.RenderCube(m_attribute.v3Min.x, m_attribute.v3Min.y, m_attribute.v3Min.z, m_attribute.v3Max.x, m_attribute.v3Max.y, m_attribute.v3Max.z);
 	return;
 }
@@ -753,7 +753,7 @@ void COBBCollisionInstance::Render(EFillMode d3dFillMode)
 {
 	static CScreen s;
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xffffffff);
+		SHADERMANAGER.SetParticleColor(0xffffffff);
 	s.RenderCube(m_attribute.v3Min.x, m_attribute.v3Min.y, m_attribute.v3Min.z, m_attribute.v3Max.x, m_attribute.v3Max.y, m_attribute.v3Max.z, m_attribute.matRot);
 	return;
 }

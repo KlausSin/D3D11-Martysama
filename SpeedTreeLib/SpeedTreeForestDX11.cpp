@@ -214,7 +214,7 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 	SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	if (!(ulRenderBitVector & Forest_RenderToShadow))
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
 	if (ulRenderBitVector & Forest_RenderBranches)
 	{

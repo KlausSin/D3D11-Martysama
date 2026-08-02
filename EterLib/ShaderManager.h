@@ -162,12 +162,13 @@ __declspec(align(16)) struct CBPerObject
 	XMMATRIX matTexture0;      // Texture transform matrix 0 (terrain color)
 	XMMATRIX matTexture1;      // Texture transform matrix 1 (terrain splat/alpha)
 	XMFLOAT4 vDiffuseColor;    // Material/vertex color multiplier (from SetDiffuseColor)
-	XMFLOAT4 vTextureFactor;   // RS_TEXTUREFACTOR color (ARGB -> RGBA)
+	XMFLOAT4 vSkyTint;         // sky gradient tint (SHADER_SKY)
 	XMFLOAT4 vMaterialParams;  // x = alphaRef, y = alphaTestEnabled, z = specularPower, w = twoTextureBlend
 	XMFLOAT4 vEmissiveColor;   // Material emissive color
 	XMFLOAT4 vSpecularColor;   // Material specular color
 	XMFLOAT4 vPBRParams;       // x = roughness, y = metallic, z = specular scale, w = specular power
 	XMFLOAT4 vRenderFlags;     // x = character shadow depth pass, yzw unused
+	XMFLOAT4 vParticleColor;   // per-draw particle colour (SHADER_PARTICLE)
 };
 
 // SpeedTree constants - wind matrices and tree data
@@ -579,7 +580,8 @@ public:
 	void SetTextureMatrix(int slot, const Matrix* pMatrix);
 
 	// Texture Factor (for color modulation)
-	void SetTextureFactor(DWORD dwColor);
+	void SetSkyTint(DWORD dwColor);
+	void SetParticleColor(DWORD dwColor);
 	void SetCharacterShadowPass(bool bEnabled);
 
 	// Commit pending constant buffer updates
@@ -814,7 +816,8 @@ public:
 	void SetFogParams(float fStart, float fEnd, DWORD dwColor);
 
 	// Texture factor — must read thread-local on workers (setter writes thread-local)
-	DWORD GetTextureFactor() const { return m_dwTextureFactor; }
+	DWORD GetSkyTint() const { return m_dwSkyTint; }
+	DWORD GetParticleColor() const { return m_dwParticleColor; }
 
 	// Best filtering helper
 	void SetBestFiltering(UINT slot);
@@ -1061,7 +1064,8 @@ private:
 	ID3D11ShaderResourceView* m_pTextures[STATEMANAGER_MAX_STAGES];
 
 	// Texture factor color
-	DWORD                     m_dwTextureFactor;
+	DWORD                     m_dwSkyTint;
+	DWORD                     m_dwParticleColor;
 
 	// Internal state update methods
 	void UpdateBlendState();

@@ -33,8 +33,8 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	bool bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
 	SHADERMANAGER.SetAlphaTestEnabled(true);
 
-	DWORD dwSavedTextureFactor = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(dwFogColor);
+	DWORD dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(dwFogColor);
 
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_WRAP);
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_WRAP);
@@ -287,7 +287,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	//////////////////////////////////////////////////////////////////////////
 	// Restore Render State
 
-	SHADERMANAGER.SetTextureFactor(dwSavedTextureFactor);
+	SHADERMANAGER.SetParticleColor(dwSavedParticleColor);
 
 	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE0);
 	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE1);
@@ -388,7 +388,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 			++nRenderTextureCount;
 		}
 
-		DWORD dwTextureFactor = SHADERMANAGER.GetTextureFactor();
+		DWORD dwParticleColor = SHADERMANAGER.GetParticleColor();
 
 		static int DefaultTCT = 8;
 		int TextureCountThreshold = DefaultTCT;
@@ -442,18 +442,18 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 		if (nRenderTextureCount>=TextureCountThreshold)
 		{
-			SHADERMANAGER.SetTextureFactor( dwTFactor);
+			SHADERMANAGER.SetParticleColor( dwTFactor);
 			SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
-			SHADERMANAGER.SetTextureFactor( dwTextureFactor);
+			SHADERMANAGER.SetParticleColor( dwParticleColor);
 		}
 		else
 		{
 			if ( 0 < rTerrainSplatPatch.PatchTileCount[sPatchNum][0] )
 			{
-					DWORD dwTextureFactorFor0Texture = SHADERMANAGER.GetTextureFactor();
-				SHADERMANAGER.SetTextureFactor( 0xFF88FF88);
+					DWORD dwParticleColorFor0Texture = SHADERMANAGER.GetParticleColor();
+				SHADERMANAGER.SetParticleColor( 0xFF88FF88);
 				SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
-				SHADERMANAGER.SetTextureFactor( dwTextureFactorFor0Texture);
+				SHADERMANAGER.SetParticleColor( dwParticleColorFor0Texture);
 			}
 
 			for (DWORD j = 1; j < pTerrain->GetNumTextures(); ++j)
@@ -467,7 +467,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 				if (dwTextureCount == 0)
 					continue;
 
-				DWORD dwTextureFactorForTextureBalance = 0xFFFFFFFF;
+				DWORD dwParticleColorForTextureBalance = 0xFFFFFFFF;
 
 				if (!(GetAsyncKeyState(VK_LSHIFT) & 0x8000))
 				{
@@ -486,11 +486,11 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 				{
 							if (dwTextureCount < 71)
 					{
-						dwTextureFactorForTextureBalance = SHADERMANAGER.GetTextureFactor();
+						dwParticleColorForTextureBalance = SHADERMANAGER.GetParticleColor();
 						if (dwTextureCount < 51)
-							SHADERMANAGER.SetTextureFactor( 0xFFFF0000);
+							SHADERMANAGER.SetParticleColor( 0xFFFF0000);
 						else
-							SHADERMANAGER.SetTextureFactor( 0xFF0000FF);
+							SHADERMANAGER.SetParticleColor( 0xFF0000FF);
 						SHADERMANAGER.SetDefaultTexture(0);
 					}
 					else
@@ -508,7 +508,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 					SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
 					if (dwTextureCount < 71)
 					{
-						SHADERMANAGER.SetTextureFactor( dwTextureFactorForTextureBalance);
+						SHADERMANAGER.SetParticleColor( dwParticleColorForTextureBalance);
 					}
 				}
 
@@ -565,12 +565,12 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 			if (rTerrainSplatPatch.PatchTileCount[sPatchNum][j] == 0)
 				continue;
 
-			DWORD dwTextureFactor;
+			DWORD dwParticleColor;
 
 			if (nRenderTextureCount>=TextureCountThreshold)
 			{
-					dwTextureFactor = SHADERMANAGER.GetTextureFactor();
-				SHADERMANAGER.SetTextureFactor( dwTFactor);
+					dwParticleColor = SHADERMANAGER.GetParticleColor();
+				SHADERMANAGER.SetParticleColor( dwTFactor);
 				SHADERMANAGER.SetDefaultTexture(0);
 			}
 			else
@@ -588,7 +588,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 			SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
 			if (nRenderTextureCount>=TextureCountThreshold)
 			{
-				SHADERMANAGER.SetTextureFactor( dwTextureFactor);
+				SHADERMANAGER.SetParticleColor( dwParticleColor);
 			}
 
 			++nRenderTextureCount;

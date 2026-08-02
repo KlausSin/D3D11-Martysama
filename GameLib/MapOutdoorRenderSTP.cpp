@@ -351,8 +351,8 @@ void CMapOutdoor::__SoftwareTransformPatch_ApplyRenderState()
 	bool bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
 	SHADERMANAGER.SetAlphaTestEnabled(true);
 
-	DWORD dwSavedTextureFactor = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(dwFogColor);
+	DWORD dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(dwFogColor);
 	SHADERMANAGER.SetLightingEnabled(false);
 	SHADERMANAGER.SetFogEnabled(false);
 

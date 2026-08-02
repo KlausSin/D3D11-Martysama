@@ -41,5 +41,5 @@ class CGraphicShadowTexture : public CGraphicTexture
 
 		// Saved render states for Begin/End
 		bool						m_bSavedAlphaTestEnabled;
-		DWORD						m_dwSavedTextureFactor;
+		DWORD						m_dwSavedParticleColor;
 };

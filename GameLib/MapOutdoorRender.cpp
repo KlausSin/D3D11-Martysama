@@ -1002,7 +1002,7 @@ void CMapOutdoor::RenderMarkedArea()
 	float fTime = float((timeGetTime() - lStartTime)%3000) / 3000.0f;
 	float fAlpha = fabs(fTime - 0.5f) / 2.0f + 0.1f;
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(Color(1.0f, 1.0f, 1.0f, fAlpha));
+		SHADERMANAGER.SetParticleColor(Color(1.0f, 1.0f, 1.0f, fAlpha));
 	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
 	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
 	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);

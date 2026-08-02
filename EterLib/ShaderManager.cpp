@@ -27,12 +27,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -105,12 +106,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -229,12 +231,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;   // Material diffuse
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams; // x = alphaRef, y = alphaTestEnabled, z = specularPower, w = twoTexBlend
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 // Native DX11 multi-light constant buffer
@@ -334,12 +337,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;  // x = alphaRef, y = alphaTestEnabled, z = specularPower, w = twoTexBlend
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -688,12 +692,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -762,12 +767,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -921,12 +927,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;    // Texture transform for color texture
 	matrix matTexture1;    // Texture transform for splat/alpha texture
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -1054,12 +1061,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -1396,12 +1404,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 #ifdef WATER_REFLECTION_ENABLED
@@ -1698,12 +1707,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -1732,7 +1742,7 @@ VS_OUTPUT main(VS_INPUT input)
 	float4 worldPos = mul(float4(input.Position, 1.0f), matWorld);
 	output.Position = mul(float4(input.Position, 1.0f), matWorldViewProj);
 	output.WorldPos = worldPos.xyz;
-	output.Color = input.Color * vDiffuseColor * vTextureFactor;
+	output.Color = input.Color * vDiffuseColor * vSkyTint;
 
 	output.Height = (1.0f - input.Position.z) * 0.5f;
 
@@ -1774,12 +1784,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;   // w > 0.5 = use texture (clouds), else skybox gradient
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 cbuffer CBSkyGradient : register(b2)
@@ -1951,12 +1962,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -1977,7 +1989,7 @@ VS_OUTPUT main(VS_INPUT input)
 	VS_OUTPUT output;
 	output.Position = mul(float4(input.Position, 1.0f), matWorldViewProj);
 	output.TexCoord = input.TexCoord;
-	output.Color = vTextureFactor;  // Color from constant buffer (set per draw call)
+	output.Color = vParticleColor;
 	return output;
 }
 )";
@@ -1993,12 +2005,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;  // w = colorOp: 0=MODULATE, 1=SELECTARG1(factor), 2=SELECTARG2(texture)
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct PS_INPUT
@@ -2086,12 +2099,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -2113,7 +2127,7 @@ VS_OUTPUT main(VS_INPUT input)
 	VS_OUTPUT output;
 	output.Position = mul(float4(input.Position, 1.0f), matWorldViewProj);
 	output.TexCoord = input.TexCoord;
-	output.Color = input.Color;  // Per-vertex color from CS output (NOT vTextureFactor)
+	output.Color = input.Color;  // Per-vertex color from CS output (NOT vSkyTint)
 	return output;
 }
 )";
@@ -2438,12 +2452,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -2479,12 +2494,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;    // Shadow color set via SetTextureFactor (typically 0xFF808080 = gray)
+	float4 vSkyTint;
 	float4 vMaterialParams;   // x = alphaRef, y = alphaTestEnabled
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2532,12 +2548,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 cbuffer CBSkinning : register(b3)
@@ -2606,12 +2623,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2659,12 +2677,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 // SpeedTree-specific constant buffer
@@ -2754,12 +2773,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;     // White (1,1,1) for normal, Gray (0.5,0.5,0.5) for shadow
+	float4 vSkyTint;     // White (1,1,1) for normal, Gray (0.5,0.5,0.5) for shadow
 	float4 vMaterialParams;    // x = alphaRef, y = alphaTestEnabled
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2895,12 +2915,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;  // x = alphaRef, y = alphaTestEnabled
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -2958,12 +2979,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct VS_INPUT
@@ -3041,12 +3063,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 cbuffer CBLighting : register(b2)
@@ -3203,12 +3226,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;   // Material diffuse
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams; // x = alphaRef, y = alphaTestEnabled, z = specularPower, w = twoTexBlend
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 // Native DX11 multi-light constant buffer
@@ -3361,12 +3385,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;  // x = alphaRef, y = alphaTestEnabled, z = specularPower, w = twoTexBlend
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -4128,12 +4153,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -4243,12 +4269,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 cbuffer CBLighting : register(b2)
@@ -4420,12 +4447,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D<float4> texInstanceData : register(t8);
@@ -4475,12 +4503,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -4531,12 +4560,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D<float4> texInstanceData : register(t8);
@@ -4622,12 +4652,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 Texture2D    texDiffuse : register(t0);
@@ -4689,12 +4720,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 // VTF instance data texture (bound to VS t8)
@@ -4777,12 +4809,13 @@ cbuffer CBPerObject : register(b1)
 	matrix matTexture0;
 	matrix matTexture1;
 	float4 vDiffuseColor;
-	float4 vTextureFactor;
+	float4 vSkyTint;
 	float4 vMaterialParams;
 	float4 vEmissiveColor;
 	float4 vSpecularColor;
 	float4 vPBRParams;
 	float4 vRenderFlags;
+	float4 vParticleColor;
 };
 
 struct Light
@@ -5066,7 +5099,8 @@ CShaderManager::CShaderManager()
 	, m_bFogEnabled(false)
 	, m_bAlphaTestEnabled(false)
 	, m_dwAlphaTestRef(0)
-	, m_dwTextureFactor(0xFFFFFFFF)
+	, m_dwSkyTint(0xFFFFFFFF)
+	, m_dwParticleColor(0xFFFFFFFF)
 	, m_dwDynamicVBOffset(0)
 	, m_dwDynamicIBOffset(0)
 	, m_bDynamicBufferNeedsDiscard(true)
@@ -5158,7 +5192,8 @@ CShaderManager::CShaderManager()
 	m_cbPerObject.matTexture0 = XMMatrixIdentity();
 	m_cbPerObject.matTexture1 = XMMatrixIdentity();
 	m_cbPerObject.vDiffuseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_cbPerObject.vTextureFactor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_cbPerObject.vSkyTint = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_cbPerObject.vParticleColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_cbPerObject.vSpecularColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 32.0f);  // RGB = color, A = power
 	m_cbPerObject.vEmissiveColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	m_cbPerObject.vMaterialParams = XMFLOAT4(0.0f, 0.0f, 32.0f, 0.0f);
@@ -5274,7 +5309,8 @@ bool CShaderManager::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 		SetViewportSize(1024.0f, 768.0f);
 	}
 
-	SetTextureFactor(0xFFFFFFFF);
+	SetSkyTint(0xFFFFFFFF);
+	SetParticleColor(0xFFFFFFFF);
 
 	m_bShadowCullActive = false;
 	memset(m_afShadowCullPlane, 0, sizeof(m_afShadowCullPlane));
@@ -6792,7 +6828,23 @@ void CShaderManager::SetCharacterShadowPass(bool bEnabled)
 	m_bPerObjectDirty = true;
 }
 
-void CShaderManager::SetTextureFactor(DWORD dwColor)
+void CShaderManager::SetParticleColor(DWORD dwColor)
+{
+	m_dwParticleColor = dwColor;
+	XMFLOAT4 v(
+		((dwColor >> 16) & 0xFF) / 255.0f,
+		((dwColor >> 8) & 0xFF) / 255.0f,
+		(dwColor & 0xFF) / 255.0f,
+		((dwColor >> 24) & 0xFF) / 255.0f
+	);
+	XMFLOAT4& cur = m_cbPerObject.vParticleColor;
+	if (cur.x == v.x && cur.y == v.y && cur.z == v.z && cur.w == v.w)
+		return;
+	cur = v;
+	m_bPerObjectDirty = true;
+}
+
+void CShaderManager::SetSkyTint(DWORD dwColor)
 {
 	XMFLOAT4 vFactor(
 		((dwColor >> 16) & 0xFF) / 255.0f,
@@ -6800,8 +6852,8 @@ void CShaderManager::SetTextureFactor(DWORD dwColor)
 		(dwColor & 0xFF) / 255.0f,
 		((dwColor >> 24) & 0xFF) / 255.0f
 	);
-		m_dwTextureFactor = dwColor;
-		XMFLOAT4& cur = m_cbPerObject.vTextureFactor;
+		m_dwSkyTint = dwColor;
+		XMFLOAT4& cur = m_cbPerObject.vSkyTint;
 		if (cur.x == vFactor.x && cur.y == vFactor.y && cur.z == vFactor.z && cur.w == vFactor.w)
 			return;
 		cur = vFactor;

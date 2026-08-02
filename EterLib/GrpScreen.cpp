@@ -940,13 +940,13 @@ void CScreen::SetOneColorOperation(Color& rColor)
 	SHADERMANAGER.SetDefaultTexture(0);
 	SHADERMANAGER.SetShaderResource(1, NULL);
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(rColor);
+		SHADERMANAGER.SetParticleColor(rColor);
 }
 
 void CScreen::SetAddColorOperation(Color& rColor)
 {
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(rColor);
+		SHADERMANAGER.SetParticleColor(rColor);
 }
 
 void CScreen::Identity()

@@ -184,7 +184,7 @@ void CEffectMeshInstance::OnRender()
 		}
 		Color.a = fFinalAlpha;
 		if (SHADERMANAGER.IsInitialized())
-			SHADERMANAGER.SetTextureFactor(DWORD(Color));
+			SHADERMANAGER.SetParticleColor(DWORD(Color));
 
 		// Bind particle shader before rendering
 		SHADERMANAGER.BeginParticle();

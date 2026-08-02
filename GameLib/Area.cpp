@@ -716,7 +716,7 @@ void CArea::RenderCollision()
 	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
 	SHADERMANAGER.SetLightingEnabled(false);
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xff000000);
+		SHADERMANAGER.SetParticleColor(0xff000000);
 
 	for(i=0;i<GetObjectInstanceCount();i++)
 	{
@@ -785,7 +785,7 @@ void CArea::RenderDungeon()
 		SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
 
 			if (SHADERMANAGER.IsInitialized())
-			SHADERMANAGER.SetTextureFactor(COLOR_ARGB( 128, 255, 0, 0) );
+			SHADERMANAGER.SetParticleColor(COLOR_ARGB( 128, 255, 0, 0) );
 	}
 #endif
 
@@ -2058,10 +2058,10 @@ void CArea::TAmbienceInstance::Render()
 {
 	float fBoxSize = 10.0f;
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xff00ff00);
+		SHADERMANAGER.SetParticleColor(0xff00ff00);
 	RenderCube(fx-fBoxSize, fy-fBoxSize, fz-fBoxSize, fx+fBoxSize, fy+fBoxSize, fz+fBoxSize);
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xffffffff);
+		SHADERMANAGER.SetParticleColor(0xffffffff);
 	RenderSphere(NULL, fx, fy, fz, float(dwRange) * fMaxVolumeAreaPercentage, FILL_POINT);
 	RenderSphere(NULL, fx, fy, fz, float(dwRange), FILL_POINT);
 	RenderCircle2d(fx, fy, fz, float(dwRange) * fMaxVolumeAreaPercentage);

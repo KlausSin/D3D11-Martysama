@@ -20,7 +20,7 @@
  *   - SHADERMANAGER.EnableLight(index, bool)
  *   - SHADERMANAGER.SetGlobalAmbient(r,g,b,a)
  *   - SHADERMANAGER.SetDiffuseColor/SetEmissiveColor/SetSpecularColor
- *   - SHADERMANAGER.SetTextureFactor(dwColor)
+ *   - SHADERMANAGER.SetParticleColor(dwColor)
  */
 
 #include <d3d11.h>
@@ -217,8 +217,8 @@ public:
 	void	SetLightingEnabled(bool bEnable);
 	bool	GetLightingEnabled() const { return m_bLightingEnabled; }
 
-	void	SetTextureFactor(DWORD dwColor);
-	DWORD	GetTextureFactor() const { return m_dwTextureFactor; }
+	void	SetParticleColor(DWORD dwColor);
+	DWORD	GetParticleColor() const { return m_dwParticleColor; }
 
 	// Render states (mapped to DX11 state objects ONLY)
 	void	SavePipelineState(EPipelineState Type, DWORD dwValue);
@@ -342,7 +342,7 @@ private:
 	bool			m_bAlphaTestEnabled;
 	float			m_fAlphaRef;
 	bool			m_bLightingEnabled;
-	DWORD			m_dwTextureFactor;
+	DWORD			m_dwParticleColor;
 
 	// Input layout (for shader binding)
 	EInputLayoutType	m_InputLayout;

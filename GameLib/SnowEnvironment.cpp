@@ -212,7 +212,7 @@ void CSnowEnvironment::Render()
 
 		SHADERMANAGER.BeginParticlePCT();
 		SHADERMANAGER.SetWorldMatrix(&matIdentity);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 		SHADERMANAGER.SetMaterialParams(0, 0, 0, 0);
 
 		float fRots[3] = { 0.0f, 0.0f, 0.0f };
@@ -265,7 +265,7 @@ void CSnowEnvironment::Render()
 
 		SHADERMANAGER.BeginParticle();
 		SHADERMANAGER.SetWorldMatrix(&matIdentity);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 		SHADERMANAGER.SetMaterialParams(0, 0, 0, 0);
 
 		GPU_PARTICLE_POOL.FlushBatch();

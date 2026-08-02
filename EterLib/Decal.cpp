@@ -229,7 +229,7 @@ void CDecal::Render()
 
 
 	// Bind shader before rendering
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);  // White - decals use per-vertex color
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);  // White - decals use per-vertex color
 	SHADERMANAGER.BeginParticle();
 
 	for (DWORD dwi = 0; dwi < m_TriangleFanStructVector.size(); ++dwi)

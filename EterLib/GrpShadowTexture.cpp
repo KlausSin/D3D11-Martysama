@@ -177,8 +177,8 @@ void CGraphicShadowTexture::Begin()
 	SHADERMANAGER.SetAlphaTestEnabled(true);
 
 	// Save texture factor manually and set new value
-	m_dwSavedTextureFactor = SHADERMANAGER.GetTextureFactor();
-	SHADERMANAGER.SetTextureFactor(0xbb000000);
+	m_dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
+	SHADERMANAGER.SetParticleColor(0xbb000000);
 
 	SHADERMANAGER.SetDefaultTexture(0);
 
@@ -222,7 +222,7 @@ void CGraphicShadowTexture::End()
 	SHADERMANAGER.SetAlphaTestEnabled(m_bSavedAlphaTestEnabled);
 
 	// Restore texture factor
-	SHADERMANAGER.SetTextureFactor(m_dwSavedTextureFactor);
+	SHADERMANAGER.SetParticleColor(m_dwSavedParticleColor);
 
 	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
 	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MAGFILTER);

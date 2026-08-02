@@ -352,7 +352,7 @@ void CWeaponTrace::Render()
 			params._pad[0] = 0;
 			params._pad[1] = 0;
 
-			SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+			SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 			SHADERMANAGER.BeginParticlePCT();
 
 			if (SHADERMANAGER.DispatchWeaponTraceCS(s_csSegments.data(), (UINT)n, params))

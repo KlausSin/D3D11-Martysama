@@ -50,7 +50,7 @@ void CPythonGraphic::SetInterfaceRenderState()
 	if (SHADERMANAGER.IsInitialized())
 	{
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 		SHADERMANAGER.SetAlphaTest(false, 0.0f);  // Disable alpha test for UI
 	}
 }
@@ -72,7 +72,7 @@ void CPythonGraphic::SetGameRenderState()
 	if (SHADERMANAGER.IsInitialized())
 	{
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 	}
 }
 

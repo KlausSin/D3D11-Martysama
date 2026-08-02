@@ -108,7 +108,7 @@ void CEffectInstance::OnRender()
 	}
 
 	SHADERMANAGER.SetParticleColorOp(4);
-	SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
 	std::for_each(m_ParticleInstanceVector.begin(), m_ParticleInstanceVector.end(), std::void_mem_fun(&CEffectElementBaseInstance::Render));
 	std::for_each(m_MeshInstanceVector.begin(), m_MeshInstanceVector.end(), std::void_mem_fun(&CEffectElementBaseInstance::Render));

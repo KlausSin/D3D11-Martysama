@@ -169,7 +169,7 @@ void CFlyTrace::Render()
 		{
 			UINT segCount = (UINT)s_csSegmentBuffer.size();
 
-			SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+			SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 			SHADERMANAGER.BeginParticlePCT();
 
 			if (SHADERMANAGER.DispatchFlyTraceCS(s_csSegmentBuffer.data(), segCount))
@@ -254,7 +254,7 @@ void CFlyTrace::Render()
 
 		if (!batchedVertices.empty())
 		{
-			SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+			SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 			SHADERMANAGER.BeginParticlePCT();
 
 			SHADERMANAGER.DrawDynamic(TOPOLOGY_TRIANGLELIST,

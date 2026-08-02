@@ -19,7 +19,7 @@ void BeginParticleShaderRender()
 	{
 		SHADERMANAGER.BeginParticle();
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);  // Reset to white - particle color is per-vertex
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 		SHADERMANAGER.SetTextureColorSwap(false);
 
 		SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
@@ -45,7 +45,7 @@ void SetParticleShaderColor(DWORD dwColor)
 {
 	if (SHADERMANAGER.IsInitialized())
 	{
-		SHADERMANAGER.SetTextureFactor(dwColor);
+		SHADERMANAGER.SetParticleColor(dwColor);
 		SHADERMANAGER.CommitChanges();
 	}
 }

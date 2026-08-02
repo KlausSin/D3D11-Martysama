@@ -30,7 +30,7 @@ void CDungeonModelInstance::RenderDungeonBlockShadow()
 	BeginShaderShadowRender();
 
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(0xffffffff);
+		SHADERMANAGER.SetParticleColor(0xffffffff);
 	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
 	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_ZERO);
 	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_SRCCOLOR);

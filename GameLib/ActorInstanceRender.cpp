@@ -151,7 +151,7 @@ void CActorInstance::BeginBlendRender()
 	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
 	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(Color(1.0f, 1.0f, 1.0f, m_fAlphaValue));
+		SHADERMANAGER.SetParticleColor(Color(1.0f, 1.0f, 1.0f, m_fAlphaValue));
 }
 
 void CActorInstance::EndBlendRender()
@@ -164,7 +164,7 @@ void CActorInstance::EndBlendRender()
 void CActorInstance::BeginAddRender()
 {
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(m_AddColor);
+		SHADERMANAGER.SetParticleColor(m_AddColor);
 	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, FALSE);
 }
 
@@ -209,7 +209,7 @@ void CActorInstance::SetAddColor(const Color & c_rColor)
 void CActorInstance::BeginModulateRender()
 {
 	if (SHADERMANAGER.IsInitialized())
-		SHADERMANAGER.SetTextureFactor(m_AddColor);
+		SHADERMANAGER.SetParticleColor(m_AddColor);
 	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, FALSE);
 }
 

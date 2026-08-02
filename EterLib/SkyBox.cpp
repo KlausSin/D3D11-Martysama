@@ -788,7 +788,7 @@ void CSkyBox::Render()
 		SHADERMANAGER.BeginSky();
 		SHADERMANAGER.SetWorldMatrix(&m_matWorld);
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetSkyTint(0xFFFFFFFF);
 		SHADERMANAGER.CommitChanges();
 	}
 
@@ -1040,7 +1040,7 @@ void CSkyBox::RenderCloud()
 		SHADERMANAGER.BeginSky();
 		SHADERMANAGER.SetWorldMatrix(&m_matWorldCloud);
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-		SHADERMANAGER.SetTextureFactor(0xFFFFFFFF);
+		SHADERMANAGER.SetSkyTint(0xFFFFFFFF);
 		// Tell shader to use texture (vMaterialParams.w = 1.0)
 		SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 1.0f);
 		SHADERMANAGER.CommitChanges();
