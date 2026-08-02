@@ -232,15 +232,15 @@ enum EInputLayoutType
 
 namespace VertexStride
 {
-	constexpr UINT PDT = 24;          // float3 pos(12) + DWORD diffuse(4) + float2 tex(8)
-	constexpr UINT PNT = 32;          // float3 pos(12) + float3 normal(12) + float2 tex(8)
-	constexpr UINT PNT2 = 40;         // float3 pos(12) + float3 normal(12) + float2 tex(8) + float2 tex2(8)
-	constexpr UINT PT = 20;           // float3 pos(12) + float2 tex(8)
-	constexpr UINT PD = 16;           // float3 pos(12) + DWORD diffuse(4)
-	constexpr UINT PDT2 = 32;         // float3 pos(12) + DWORD diffuse(4) + float2 tex(8) + float2 tex2(8)
+	constexpr UINT PDT = sizeof(SPDTVertex);          // float3 pos(12) + DWORD diffuse(4) + float2 tex(8)
+	constexpr UINT PNT = sizeof(SPNTVertex);          // float3 pos(12) + float3 normal(12) + float2 tex(8)
+	constexpr UINT PNT2 = sizeof(SPNT2Vertex);         // float3 pos(12) + float3 normal(12) + float2 tex(8) + float2 tex2(8)
+	constexpr UINT PT = sizeof(SPTVertex);           // float3 pos(12) + float2 tex(8)
+	constexpr UINT PD = sizeof(SPDVertex);           // float3 pos(12) + DWORD diffuse(4)
+	constexpr UINT PDT2 = sizeof(SPDT2Vertex);         // float3 pos(12) + DWORD diffuse(4) + float2 tex(8) + float2 tex2(8)
 	constexpr UINT PN = 24;           // float3 pos(12) + float3 normal(12)
 	constexpr UINT TRANSFORMED = 24;  // float3 pos(12) + DWORD diffuse(4) + float2 tex(8)
-	constexpr UINT SKINNED = 52;      // float3 pos(12) + float3 normal(12) + float2 tex(8) + float4 weights(16) + ubyte4 indices(4)
+	constexpr UINT SKINNED = sizeof(SSkinnedVertex);      // float3 pos(12) + float3 normal(12) + float2 tex(8) + float4 weights(16) + ubyte4 indices(4)
 }
 
 // Get vertex stride for a given input layout type
