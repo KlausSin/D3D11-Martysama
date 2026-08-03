@@ -157,57 +157,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 }
 )";
 
-static const char* g_szPBRFunctions = R"(
-#define PI 3.14159265359f
-
-float DistributionGGX(float NdotH, float roughness)
-{
-	float a = roughness * roughness;
-	float a2 = a * a;
-	float denom = NdotH * NdotH * (a2 - 1.0f) + 1.0f;
-	return a2 / (PI * denom * denom + 0.0001f);
-}
-
-float GeometrySchlickGGX(float NdotV, float roughness)
-{
-	float r = roughness + 1.0f;
-	float k = (r * r) / 8.0f;
-	return NdotV / (NdotV * (1.0f - k) + k);
-}
-
-float GeometrySmith(float NdotV, float NdotL, float roughness)
-{
-	return GeometrySchlickGGX(NdotV, roughness) * GeometrySchlickGGX(NdotL, roughness);
-}
-
-float3 FresnelSchlick(float cosTheta, float3 F0)
-{
-	return F0 + (1.0f - F0) * pow(saturate(1.0f - cosTheta), 5.0f);
-}
-
-float3 EvalPBRLight(float3 L, float3 N, float3 V, float3 lightColor, float atten,
-					float3 albedo, float roughness, float metallic, float3 F0)
-{
-	float3 H = normalize(V + L);
-	float NdotL = max(dot(N, L), 0.0f);
-	float NdotV = max(dot(N, V), 0.001f);
-	float NdotH = max(dot(N, H), 0.0f);
-	float HdotV = max(dot(H, V), 0.0f);
-
-	float D = DistributionGGX(NdotH, roughness);
-	float G = GeometrySmith(NdotV, NdotL, roughness);
-	float3 F = FresnelSchlick(HdotV, F0);
-
-	float3 numerator = D * G * F;
-	float denominator = 4.0f * NdotV * NdotL + 0.0001f;
-	float3 specular = numerator / denominator;
-
-	float3 kS = F;
-	float3 kD = (1.0f - kS) * (1.0f - metallic);
-
-	return (kD * albedo * 0.5f + specular) * lightColor * NdotL * atten;
-}
-)";
 
 
 static const char* g_szMeshVertexShader = R"(
@@ -468,49 +417,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float3 normal = normalize(input.WorldNorm);
 	float3 ambient = max(globalAmbient.rgb, float3(0.4f, 0.4f, 0.4f));
 
-#ifdef PBR_ENABLED
-	float3 V = normalize(vCameraPos.xyz - input.WorldPos);
-	float3 albedo = texColor.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = sqrt(2.0f / (max(vMaterialParams.z, 1.0f) + 2.0f));
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 Lo = float3(0, 0, 0);
-
-	// Directional light
-	if (lights[0].Direction.w > 0.5f)
-	{
-		float3 L = normalize(-lights[0].Direction.xyz);
-		float3 lc = lights[0].Color.rgb * max(lights[0].Color.a, 1.0f);
-		float cm = dot(lc, lc);
-		if (cm < 0.01f) lc = float3(1, 1, 1);
-		Lo += EvalPBRLight(L, normal, V, lc, 1.0f, albedo, roughness, metallic, F0);
-	}
-
-	// Point/spot lights
-	int maxLights = min(numActiveLights, MAX_LIGHTS);
-	for (int i = 1; i < maxLights; ++i)
-	{
-		if (lights[i].Direction.w < 0.5f) continue;
-		float lightType = lights[i].Position.w;
-		float3 lightVec = lights[i].Position.xyz - input.WorldPos;
-		float dist = length(lightVec);
-		float3 L = lightVec / max(dist, 0.001f);
-		float atten = CalcAttenuation(dist, lights[i].Attenuation);
-		if (atten <= 0.0f) continue;
-		if (lightType == LIGHT_SPOT)
-		{
-			float3 spotDir = normalize(lights[i].Direction.xyz);
-			atten *= saturate((dot(-L, spotDir) - 0.5f) * 2.0f);
-		}
-		float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, normal, V, lc, atten, albedo, roughness, metallic, F0);
-	}
-
-	float3 lighting = ambient * albedo + Lo;
-	float4 finalColor = float4(saturate(lighting), texColor.a * vDiffuseColor.a);
-#else
 	float3 diffuse = float3(0, 0, 0);
 
 	// Check if light 0 is enabled
@@ -522,8 +428,8 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float3 lighting = saturate(ambient + diffuse);
 
 	// Base color: texture * material diffuse * lighting
-	float4 finalColor = float4(texColor.rgb * vDiffuseColor.rgb * lighting, texColor.a * vDiffuseColor.a);
-#endif
+	float meshAlpha = lerp(1.0f, texColor.a, vRenderFlags.y);
+	float4 finalColor = float4(texColor.rgb * vDiffuseColor.rgb * lighting, meshAlpha * vDiffuseColor.a * vParticleColor.a);
 
 	{
 		float specMag = dot(vSpecularColor.rgb, vSpecularColor.rgb);
@@ -867,43 +773,8 @@ float4 main(PS_INPUT input) : SV_TARGET
 		discard;
 
 	// Apply lighting
-#ifdef PBR_ENABLED
-	float3 normal = normalize(input.WorldNorm);
-	float3 V = normalize(vCameraPos.xyz - input.WorldPos);
-	float3 albedo = blendedTex.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = 0.7f;
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 ambient = max(globalAmbient.rgb, float3(0.4f, 0.4f, 0.4f));
-	float3 Lo = float3(0, 0, 0);
-
-	if (lights[0].Direction.w > 0.5f)
-	{
-		float3 L = normalize(-lights[0].Direction.xyz);
-		float3 lc = lights[0].Color.rgb * max(lights[0].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, normal, V, lc, 1.0f, albedo, roughness, metallic, F0);
-	}
-
-	int maxLights = min(numActiveLights, MAX_LIGHTS);
-	for (int i = 1; i < maxLights; ++i)
-	{
-		if (lights[i].Direction.w < 0.5f) continue;
-		float3 lightVec = lights[i].Position.xyz - input.WorldPos;
-		float dist = length(lightVec);
-		float3 L = lightVec / max(dist, 0.001f);
-		float atten = CalcAttenuation(dist, lights[i].Attenuation);
-		if (atten <= 0.0f) continue;
-		float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, normal, V, lc, atten, albedo, roughness, metallic, F0);
-	}
-
-	float4 finalColor = float4(saturate(ambient * albedo + Lo), blendedTex.a * vDiffuseColor.a);
-#else
 	// Apply material diffuse color
 	float4 finalColor = blendedTex * vDiffuseColor;
-#endif
 
 	// Height-based atmospheric fog
 	finalColor.rgb = lerp(vFogColor.rgb, finalColor.rgb, input.FogFactor);
@@ -1279,43 +1150,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	// Start with ambient (passed from vertex shader)
 	float3 ambient = input.Diffuse;
 
-#ifdef PBR_ENABLED
-	float3 albedo = finalTexColor.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = 0.85f;
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 Lo = float3(0, 0, 0);
-
-	if (lights[0].Direction.w > 0.5f)
-	{
-		float3 L = normalize(-lights[0].Direction.xyz);
-		float3 lc = lights[0].Color.rgb * max(lights[0].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, N, V, lc, 1.0f, albedo, roughness, metallic, F0);
-	}
-
-	int maxLights = min(numActiveLights, MAX_LIGHTS);
-	for (int i = 1; i < maxLights; ++i)
-	{
-		if (lights[i].Direction.w < 0.5f) continue;
-		float lightType = lights[i].Position.w;
-		float3 lightVec = lights[i].Position.xyz - input.WorldPos;
-		float dist = length(lightVec);
-		float3 L = lightVec / max(dist, 0.001f);
-		float atten = CalcAttenuation(dist, lights[i].Attenuation);
-		if (atten <= 0.0f) continue;
-		if (lightType == LIGHT_SPOT)
-		{
-			float3 spotDir = normalize(lights[i].Direction.xyz);
-			atten *= saturate((dot(-L, spotDir) - 0.5f) * 2.0f);
-		}
-		float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, N, V, lc, atten, albedo, roughness, metallic, F0);
-	}
-
-	float4 finalColor = float4(saturate(ambient * albedo + Lo), finalTexColor.a * vDiffuseColor.a);
-#else
 	float3 diffuse = float3(0.0f, 0.0f, 0.0f);
 	float3 specular = float3(0.0f, 0.0f, 0.0f);
 
@@ -1375,7 +1209,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float3 finalLighting = saturate(finalDiffuse + specular);
 	float outAlpha = finalTexColor.a * vDiffuseColor.a;
 	float4 finalColor = float4(finalTexColor.rgb * finalLighting, outAlpha);
-#endif
 
 	// Height-based atmospheric fog
 	finalColor.rgb = lerp(vFogColor.rgb, finalColor.rgb, input.FogFactor);
@@ -3107,44 +2940,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	// Lighting calculation
 	float3 viewDir = normalize(vCameraPos.xyz - input.WorldPos);
 
-#ifdef PBR_ENABLED
-	float3 albedo = diffuseColor.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = sqrt(2.0f / (max(vMaterialParams.z, 1.0f) + 2.0f));
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 ambient = globalAmbient.rgb;
-	float3 Lo = float3(0, 0, 0);
-
-	for (int i = 0; i < min(numActiveLights, MAX_LIGHTS); i++)
-	{
-		if (lights[i].Direction.w < 0.5f) continue;
-
-		float3 lightDir;
-		float attenuation = 1.0f;
-
-		int lightType = (int)lights[i].Position.w;
-		if (lightType == 3)
-		{
-			lightDir = -normalize(lights[i].Direction.xyz);
-		}
-		else
-		{
-			float3 toLight = lights[i].Position.xyz - input.WorldPos;
-			float dist = length(toLight);
-			lightDir = toLight / max(dist, 0.001f);
-			attenuation = 1.0f / (lights[i].Attenuation.x +
-				lights[i].Attenuation.y * dist +
-				lights[i].Attenuation.z * dist * dist);
-		}
-
-		float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-		Lo += EvalPBRLight(lightDir, worldNormal, viewDir, lc, attenuation, albedo, roughness, metallic, F0);
-	}
-
-	float3 finalColor = saturate(ambient * albedo + Lo) + vEmissiveColor.rgb;
-#else
 	float3 finalColor = globalAmbient.rgb * diffuseColor.rgb;
 
 	for (int i = 0; i < min(numActiveLights, MAX_LIGHTS); i++)
@@ -3181,7 +2976,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	}
 
 	finalColor += vEmissiveColor.rgb;
-#endif
 
 	// Height-based atmospheric fog
 	float4 finalOut = float4(finalColor, diffuseColor.a * vDiffuseColor.a);
@@ -3545,59 +3339,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float3 ambient = max(globalAmbient.rgb, float3(0.3f, 0.3f, 0.3f));
 	float3 normal = normalize(input.WorldNorm);
 
-#ifdef PBR_ENABLED
-	float3 V = normalize(vCameraPos.xyz - input.WorldPos);
-	float3 albedo = texColor.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = sqrt(2.0f / (max(vMaterialParams.z, 1.0f) + 2.0f));
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 Lo = float3(0, 0, 0);
-	bool anyLightEnabled = false;
-
-	[unroll]
-	for (int i = 0; i < MAX_LIGHTS; ++i)
-	{
-		if (lights[i].Direction.w > 0.5f)
-		{
-			anyLightEnabled = true;
-			int lightType = (int)lights[i].Position.w;
-			float3 L;
-			float atten = 1.0f;
-			if (lightType == LIGHT_DIRECTIONAL)
-			{
-				L = normalize(-lights[i].Direction.xyz);
-			}
-			else
-			{
-				float3 toLight = lights[i].Position.xyz - input.WorldPos;
-				float dist = length(toLight);
-				L = toLight / max(dist, 0.001f);
-				float denom = lights[i].Attenuation.x + lights[i].Attenuation.y * dist + lights[i].Attenuation.z * dist * dist;
-				atten = (denom > 0.001f) ? min(1.0f / denom, 2.0f) : 1.0f;
-				if (dist > lights[i].Attenuation.w && lights[i].Attenuation.w > 0.0f) atten = 0.0f;
-				if (lightType == LIGHT_SPOT)
-				{
-					float3 spotDir = normalize(lights[i].Direction.xyz);
-					atten *= saturate((dot(-L, spotDir) - 0.5f) * 2.0f);
-				}
-			}
-			float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-			float cm = dot(lc, lc);
-			if (cm < 0.01f) lc = float3(1, 1, 1);
-			Lo += EvalPBRLight(L, normal, V, lc, atten, albedo, roughness, metallic, F0);
-		}
-	}
-
-	float3 lighting;
-	if (anyLightEnabled)
-		lighting = saturate(ambient * albedo + Lo);
-	else
-		lighting = albedo;
-
-	float4 finalColor = float4(lighting, texColor.a * vDiffuseColor.a);
-#else
 	float3 diffuse = float3(0, 0, 0);
 
 	// Accumulate light contributions from all enabled lights
@@ -3619,8 +3360,8 @@ float4 main(PS_INPUT input) : SV_TARGET
 		lighting = float3(1.0f, 1.0f, 1.0f);
 
 	// Base color: texture * material diffuse * lighting
-	float4 finalColor = float4(texColor.rgb * vDiffuseColor.rgb * lighting, texColor.a * vDiffuseColor.a);
-#endif
+	float meshAlpha = lerp(1.0f, texColor.a, vRenderFlags.y);
+	float4 finalColor = float4(texColor.rgb * vDiffuseColor.rgb * lighting, meshAlpha * vDiffuseColor.a * vParticleColor.a);
 
 	{
 		float specMag = dot(vSpecularColor.rgb, vSpecularColor.rgb);
@@ -4335,41 +4076,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	float3 normal = normalize(input.WorldNorm);
 	float3 ambient = max(globalAmbient.rgb, float3(0.4f, 0.4f, 0.4f));
 
-#ifdef PBR_ENABLED
-	float3 V = normalize(vCameraPos.xyz - input.WorldPos);
-	float3 albedo = texColor.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = sqrt(2.0f / (max(vMaterialParams.z, 1.0f) + 2.0f));
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 Lo = float3(0, 0, 0);
-
-	if (lights[0].Direction.w > 0.5f)
-	{
-		float3 L = normalize(-lights[0].Direction.xyz);
-		float3 lc = lights[0].Color.rgb * max(lights[0].Color.a, 1.0f);
-		float cm = dot(lc, lc);
-		if (cm < 0.01f) lc = float3(1, 1, 1);
-		Lo += EvalPBRLight(L, normal, V, lc, 1.0f, albedo, roughness, metallic, F0);
-	}
-
-	int maxLights = min(numActiveLights, MAX_LIGHTS);
-	for (int i = 1; i < maxLights; ++i)
-	{
-		if (lights[i].Direction.w < 0.5f) continue;
-		float3 lightVec = lights[i].Position.xyz - input.WorldPos;
-		float dist = length(lightVec);
-		float3 L = lightVec / max(dist, 0.001f);
-		float atten = 1.0f / (lights[i].Attenuation.x + lights[i].Attenuation.y * dist + lights[i].Attenuation.z * dist * dist);
-		if (dist > lights[i].Attenuation.w && lights[i].Attenuation.w > 0.0f) atten = 0.0f;
-		if (atten <= 0.0f) continue;
-		float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, normal, V, lc, atten, albedo, roughness, metallic, F0);
-	}
-
-	float4 finalColor = float4(saturate(ambient * albedo + Lo), texColor.a * vDiffuseColor.a);
-#else
 	float3 diffuse = float3(0, 0, 0);
 
 	if (lights[0].Direction.w > 0.5f)
@@ -4379,8 +4085,8 @@ float4 main(PS_INPUT input) : SV_TARGET
 
 	float3 lighting = saturate(ambient + diffuse);
 
-	float4 finalColor = float4(texColor.rgb * vDiffuseColor.rgb * lighting, texColor.a * vDiffuseColor.a);
-#endif
+	float meshAlpha = lerp(1.0f, texColor.a, vRenderFlags.y);
+	float4 finalColor = float4(texColor.rgb * vDiffuseColor.rgb * lighting, meshAlpha * vDiffuseColor.a * vParticleColor.a);
 
 	{
 		float specMag = dot(vSpecularColor.rgb, vSpecularColor.rgb);
@@ -4891,44 +4597,8 @@ float4 main(PS_INPUT input) : SV_TARGET
 		discard;
 
 	// Apply lighting
-#ifdef PBR_ENABLED
-	float3 normal = normalize(input.WorldNorm);
-	float3 V = normalize(vCameraPos.xyz - input.WorldPos);
-	float3 albedo = blendedTex.rgb * vDiffuseColor.rgb;
-	float roughness = vPBRParams.x;
-	if (roughness < 0.01f) roughness = 0.7f;
-	roughness = clamp(roughness, 0.04f, 1.0f);
-	float metallic = vPBRParams.y;
-	float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic);
-	float3 ambient = max(globalAmbient.rgb, float3(0.4f, 0.4f, 0.4f));
-	float3 Lo = float3(0, 0, 0);
-
-	if (lights[0].Direction.w > 0.5f)
-	{
-		float3 L = normalize(-lights[0].Direction.xyz);
-		float3 lc = lights[0].Color.rgb * max(lights[0].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, normal, V, lc, 1.0f, albedo, roughness, metallic, F0);
-	}
-
-	int maxLights = min(numActiveLights, MAX_LIGHTS);
-	for (int i = 1; i < maxLights; ++i)
-	{
-		if (lights[i].Direction.w < 0.5f) continue;
-		float3 lightVec = lights[i].Position.xyz - input.WorldPos;
-		float dist = length(lightVec);
-		float3 L = lightVec / max(dist, 0.001f);
-		float atten = 1.0f / (lights[i].Attenuation.x + lights[i].Attenuation.y * dist + lights[i].Attenuation.z * dist * dist);
-		if (dist > lights[i].Attenuation.w && lights[i].Attenuation.w > 0.0f) atten = 0.0f;
-		if (atten <= 0.0f) continue;
-		float3 lc = lights[i].Color.rgb * max(lights[i].Color.a, 1.0f);
-		Lo += EvalPBRLight(L, normal, V, lc, atten, albedo, roughness, metallic, F0);
-	}
-
-	float4 finalColor = float4(saturate(ambient * albedo + Lo), blendedTex.a * vDiffuseColor.a);
-#else
 	// Apply material diffuse color
 	float4 finalColor = blendedTex * vDiffuseColor;
-#endif
 
 	// Height-based atmospheric fog
 	finalColor.rgb = lerp(vFogColor.rgb, finalColor.rgb, input.FogFactor);
@@ -5483,42 +5153,21 @@ bool CShaderManager::CompileAllShaders()
 		bSuccess = false;
 	}
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string meshPS = pbrPrefix + g_szMeshPixelShader;
-		if (!CompileShader(SHADER_MESH, g_szMeshVertexShader, meshPS.c_str(), g_MeshInputLayout, ARRAYSIZE(g_MeshInputLayout)))
-#else
 		if (!CompileShader(SHADER_MESH, g_szMeshVertexShader, g_szMeshPixelShader, g_MeshInputLayout, ARRAYSIZE(g_MeshInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_MESH]);
 			bSuccess = false;
 		}
 	}
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string mesh2TexPS = pbrPrefix + g_szMesh2TexPixelShader;
-		if (!CompileShader(SHADER_MESH_2TEX, g_szMesh2TexVertexShader, mesh2TexPS.c_str(), g_Mesh2TexInputLayout, ARRAYSIZE(g_Mesh2TexInputLayout)))
-#else
 		if (!CompileShader(SHADER_MESH_2TEX, g_szMesh2TexVertexShader, g_szMesh2TexPixelShader, g_Mesh2TexInputLayout, ARRAYSIZE(g_Mesh2TexInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_MESH_2TEX]);
 			bSuccess = false;
 		}
 	}
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string terrainPS = pbrPrefix + g_szTerrainPixelShader;
-		if (!CompileShader(SHADER_TERRAIN, g_szTerrainVertexShader, terrainPS.c_str(), g_TerrainInputLayout, ARRAYSIZE(g_TerrainInputLayout)))
-#else
 		if (!CompileShader(SHADER_TERRAIN, g_szTerrainVertexShader, g_szTerrainPixelShader, g_TerrainInputLayout, ARRAYSIZE(g_TerrainInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_TERRAIN]);
 			bSuccess = false;
@@ -5563,14 +5212,7 @@ bool CShaderManager::CompileAllShaders()
 	}
 	// Normal mapped mesh shader
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string normalPS = pbrPrefix + g_szMeshNormalPS;
-		if (!CompileShader(SHADER_MESH_NORMAL, g_szMeshNormalVS, normalPS.c_str(), g_MeshNormalInputLayout, ARRAYSIZE(g_MeshNormalInputLayout)))
-#else
 		if (!CompileShader(SHADER_MESH_NORMAL, g_szMeshNormalVS, g_szMeshNormalPS, g_MeshNormalInputLayout, ARRAYSIZE(g_MeshNormalInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_MESH_NORMAL]);
 			bSuccess = false;
@@ -5578,14 +5220,7 @@ bool CShaderManager::CompileAllShaders()
 	}
 	// GPU Skinned mesh shader
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string skinnedPS = pbrPrefix + g_szSkinnedMeshPixelShader;
-		if (!CompileShader(SHADER_MESH_SKINNED, g_szSkinnedMeshVertexShader, skinnedPS.c_str(), g_SkinnedMeshInputLayout, ARRAYSIZE(g_SkinnedMeshInputLayout)))
-#else
 		if (!CompileShader(SHADER_MESH_SKINNED, g_szSkinnedMeshVertexShader, g_szSkinnedMeshPixelShader, g_SkinnedMeshInputLayout, ARRAYSIZE(g_SkinnedMeshInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile MeshSkinned shader");
 			bSuccess = false;
@@ -5634,14 +5269,7 @@ bool CShaderManager::CompileAllShaders()
 #endif
 	// VTF Batched Mesh shader (instanced rendering)
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string meshVTFPS = pbrPrefix + g_szMeshVTFPixelShader;
-		if (!CompileShader(SHADER_MESH_VTF, g_szMeshVTFVertexShader, meshVTFPS.c_str(), g_MeshVTFInputLayout, ARRAYSIZE(g_MeshVTFInputLayout)))
-#else
 		if (!CompileShader(SHADER_MESH_VTF, g_szMeshVTFVertexShader, g_szMeshVTFPixelShader, g_MeshVTFInputLayout, ARRAYSIZE(g_MeshVTFInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile MeshVTF shader");
 			bSuccess = false;
@@ -5660,14 +5288,7 @@ bool CShaderManager::CompileAllShaders()
 		bSuccess = false;
 	}
 	{
-#ifdef ENABLE_PBR
-		std::string pbrPrefix = "#define PBR_ENABLED\n";
-		pbrPrefix += g_szPBRFunctions;
-		std::string mesh2TexVTFPS = pbrPrefix + g_szMesh2TexVTFPixelShader;
-		if (!CompileShader(SHADER_MESH_2TEX_VTF, g_szMesh2TexVTFVertexShader, mesh2TexVTFPS.c_str(), g_Mesh2TexVTFInputLayout, ARRAYSIZE(g_Mesh2TexVTFInputLayout)))
-#else
 		if (!CompileShader(SHADER_MESH_2TEX_VTF, g_szMesh2TexVTFVertexShader, g_szMesh2TexVTFPixelShader, g_Mesh2TexVTFInputLayout, ARRAYSIZE(g_Mesh2TexVTFInputLayout)))
-#endif
 		{
 			TraceError("CompileAllShaders: Failed to compile Mesh2TexVTF shader");
 			bSuccess = false;
@@ -6719,20 +6340,6 @@ void CShaderManager::SetSpecularPower(float power)
 		m_bPerObjectDirty = true;
 }
 
-void CShaderManager::SetPBRRoughness(float roughness)
-{
-		if (m_cbPerObject.vPBRParams.x == roughness) return;
-		m_cbPerObject.vPBRParams.x = roughness;
-		m_bPerObjectDirty = true;
-}
-
-void CShaderManager::SetPBRMetallic(float metallic)
-{
-		if (m_cbPerObject.vPBRParams.y == metallic) return;
-		m_cbPerObject.vPBRParams.y = metallic;
-		m_bPerObjectDirty = true;
-}
-
 void CShaderManager::SetEmissiveColor(float r, float g, float b)
 {
 		XMFLOAT4& cur = m_cbPerObject.vEmissiveColor;
@@ -6814,6 +6421,16 @@ void CShaderManager::SetParticleColor(DWORD dwColor)
 	if (cur.x == v.x && cur.y == v.y && cur.z == v.z && cur.w == v.w)
 		return;
 	cur = v;
+	m_bPerObjectDirty = true;
+}
+
+void CShaderManager::SetMeshTextureAlphaEnabled(bool bEnabled)
+{
+	const float v = bEnabled ? 1.0f : 0.0f;
+	if (m_cbPerObject.vRenderFlags.y == v)
+		return;
+
+	m_cbPerObject.vRenderFlags.y = v;
 	m_bPerObjectDirty = true;
 }
 
@@ -8143,11 +7760,6 @@ void CShaderManager::SetMaterial(const TMaterial* pMaterial)
 	SetSpecularColor(pMaterial->Specular.r, pMaterial->Specular.g, pMaterial->Specular.b);
 	SetEmissiveColor(pMaterial->Emissive.r, pMaterial->Emissive.g, pMaterial->Emissive.b);
 	SetMaterial(pMaterial->Power);
-
-	float power = pMaterial->Power;
-	float roughness = (power > 0.0f) ? sqrtf(2.0f / (power + 2.0f)) : 0.0f;
-	SetPBRRoughness(roughness);
-	SetPBRMetallic(0.0f);
 }
 
 void CShaderManager::GetMaterial(TMaterial* pMaterial) const

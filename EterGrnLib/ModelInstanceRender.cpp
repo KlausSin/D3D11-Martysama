@@ -78,6 +78,8 @@ void CGrannyModelInstance::RenderWithOneTexture()
 	if (IsEmpty())
 		return;
 
+	SHADERMANAGER.SetMeshTextureAlphaEnabled(false);
+
 #ifdef _TEST
 	Granny_RenderBoxBones(GrannyGetSourceSkeleton(m_pgrnModelInstance), m_pgrnWorldPose, TEST_matWorld);
 	if (GetAsyncKeyState('P'))
@@ -117,6 +119,8 @@ void CGrannyModelInstance::BlendRenderWithOneTexture()
 	if (IsEmpty())
 		return;
 
+	SHADERMANAGER.SetMeshTextureAlphaEnabled(true);
+
 	ID3D11Buffer* lpd3dRigidPNTVtxBuf = m_pModel->GetPNTD3DVertexBuffer();
 	ID3D11Buffer* lpd3dSkinnedVtxBuf = __GetSkinnedD3DVertexBuffer();
 
@@ -141,6 +145,8 @@ void CGrannyModelInstance::BlendRenderWithOneTexture()
 		RenderMeshNodeListWithOneTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 		EndShaderMeshRender();
 	}
+
+	SHADERMANAGER.SetMeshTextureAlphaEnabled(false);
 }
 
 // With Two Texture (Shadow Receiving)

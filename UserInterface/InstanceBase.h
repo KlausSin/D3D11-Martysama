@@ -505,6 +505,8 @@ class CInstanceBase
 		void					Render();
 		void					RenderWithRigidDefer();  // VTF: renders skinned parts, defers rigid parts
 		void					RenderBlendPassDeferred();  // VTF: renders blend/opacity after rigid flush
+		void					ArmMainActorFadeOnNextRender();
+		bool					HasMainActorFadeStarted() const;
 		void					RenderTrace();
 		void					RenderToShadowMap();
 		void					RenderCollision();
@@ -1082,6 +1084,9 @@ class CInstanceBase
 		CommandQueue m_kQue_kCmdNew;
 
 		BOOL		m_bDamageEffectType;
+
+		bool		m_isMainActorFadeArmed;
+		bool		m_isMainActorFadeStarted;
 
 		struct SEffectDamage
 		{

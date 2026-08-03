@@ -5,6 +5,7 @@
 #include "PythonNetworkStream.h"
 #include "Packet.h"
 #include "NetworkActorManager.h"
+#include "PythonCharacterManager.h"
 
 #include "GuildMarkDownloader.h"
 #include "GuildMarkUploader.h"
@@ -682,6 +683,7 @@ bool CPythonNetworkStream::OnProcess()
 	if (m_isStartGame)
 	{
 		m_isStartGame = FALSE;
+		m_isMainActorFadePending = TRUE;
 
 		ID3D11Device* pDevice = CGraphicBase::GetDevice();
 		if (pDevice)
@@ -697,6 +699,19 @@ bool CPythonNetworkStream::OnProcess()
 	}
 
 	m_rokNetActorMgr->Update();
+
+	if (m_isMainActorFadePending)
+	{
+		CInstanceBase* pMainInstance = CPythonCharacterManager::Instance().GetMainInstancePtr();
+
+		if (pMainInstance)
+		{
+			if (pMainInstance->HasMainActorFadeStarted())
+				m_isMainActorFadePending = FALSE;
+			else
+				pMainInstance->ArmMainActorFadeOnNextRender();
+		}
+	}
 
 	if (m_phaseProcessFunc.IsEmpty())
 		return true;
@@ -897,6 +912,7 @@ CPythonNetworkStream::CPythonNetworkStream()
 	m_dwLoginKey = 0;
 	m_isWaitLoginKey = FALSE;
 	m_isStartGame = FALSE;
+	m_isMainActorFadePending = FALSE;
 	m_isEnableChatInsultFilter = FALSE;
 	m_bComboSkillFlag = FALSE;
 	m_strPhase = "OffLine";

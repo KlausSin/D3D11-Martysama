@@ -2136,6 +2136,22 @@ void CInstanceBase::RenderWithRigidDefer()
 	if (!rkActor.isShow())
 		return;
 
+	if (m_isMainActorFadeArmed && __IsMainInstance())
+	{
+		const float fTargetAlpha = 1.0f;
+		m_isMainActorFadeArmed = false;
+		m_isMainActorFadeStarted = true;
+		rkActor.SetAlphaValue(0.0f);
+		rkActor.BlendAlphaValue(fTargetAlpha, 1.0f);
+	}
+
+	if (rkActor.GetRenderMode() == CActorInstance::RENDER_MODE_BLEND &&
+		rkActor.GetAlphaValue() < 1.0f)
+	{
+		Render();
+		return;
+	}
+
 	TMaterial kMtrl;
 	SHADERMANAGER.GetMaterial(&kMtrl);
 	SHADERMANAGER.SetMaterial(&kMtrl);
@@ -2198,6 +2214,17 @@ void CInstanceBase::RenderWithRigidDefer()
 	}
 }
 
+void CInstanceBase::ArmMainActorFadeOnNextRender()
+{
+	if (!m_isMainActorFadeStarted)
+		m_isMainActorFadeArmed = true;
+}
+
+bool CInstanceBase::HasMainActorFadeStarted() const
+{
+	return m_isMainActorFadeStarted;
+}
+
 void CInstanceBase::RenderBlendPassDeferred()
 {
 	if (!__CanRender())
@@ -2207,6 +2234,12 @@ void CInstanceBase::RenderBlendPassDeferred()
 
 	if (!rkActor.isShow())
 		return;
+
+	if (rkActor.GetRenderMode() == CActorInstance::RENDER_MODE_BLEND &&
+		rkActor.GetAlphaValue() < 1.0f)
+	{
+		return;
+	}
 
 	switch (rkActor.GetRenderMode())
 	{
@@ -3532,6 +3565,9 @@ void CInstanceBase::__Initialize()
 	m_dwBaseCmdTime=0;
 	m_dwBaseChkTime=0;
 	m_dwSkipTime=0;
+
+	m_isMainActorFadeArmed = false;
+	m_isMainActorFadeStarted = false;
 
 	m_GraphicThingInstance.Initialize();
 

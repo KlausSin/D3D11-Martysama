@@ -122,6 +122,8 @@ void CActorInstance::OnRender()
 
 void CActorInstance::BeginDiffuseRender()
 {
+	if (SHADERMANAGER.IsInitialized())
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, FALSE);
 }
 
@@ -132,6 +134,9 @@ void CActorInstance::EndDiffuseRender()
 
 void CActorInstance::BeginOpacityRender()
 {
+	if (SHADERMANAGER.IsInitialized())
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
+
 	m_bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
 	m_dwSavedAlphaRef = SHADERMANAGER.GetAlphaTestRef();
 
@@ -159,6 +164,8 @@ void CActorInstance::EndBlendRender()
 	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
 	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
 	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+	if (SHADERMANAGER.IsInitialized())
+		SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 }
 
 void CActorInstance::BeginAddRender()

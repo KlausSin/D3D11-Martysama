@@ -636,6 +636,7 @@ class CPythonNetworkStream : public CNetworkStream, public CSingleton<CPythonNet
 		DWORD m_dwMainActorSkillGroup;
 		BOOL m_isGameOnline;
 		BOOL m_isStartGame;
+		BOOL m_isMainActorFadePending;
 
 		DWORD m_dwGuildID;
 #ifdef ENABLE_GUILD_TOKEN_AUTH

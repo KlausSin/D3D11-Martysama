@@ -178,8 +178,8 @@ __declspec(align(16)) struct CBPerObject
 	XMFLOAT4 vMaterialParams;  // x = alphaRef, y = alphaTestEnabled, z = specularPower, w = twoTextureBlend
 	XMFLOAT4 vEmissiveColor;   // Material emissive color
 	XMFLOAT4 vSpecularColor;   // Material specular color
-	XMFLOAT4 vPBRParams;       // x = roughness, y = metallic, z = specular scale, w = specular power
-	XMFLOAT4 vRenderFlags;     // x = character shadow depth pass, yzw unused
+	XMFLOAT4 vPBRParams;       // z = specular scale, w = specular power
+	XMFLOAT4 vRenderFlags;     // x = character shadow depth pass, y = mesh texture alpha enable
 	XMFLOAT4 vParticleColor;   // per-draw particle colour (SHADER_PARTICLE)
 	XMFLOAT4 vParticleParams;  // x = EParticleColorOp, yzw unused
 };
@@ -578,8 +578,6 @@ public:
 	void SetSpecularTune(float fIntensity, float fPower);
 	void SetSpecularPower(float power);
 	void SetEmissiveColor(float r, float g, float b);
-	void SetPBRRoughness(float roughness);
-	void SetPBRMetallic(float metallic);
 	void SetTextureColorSwap(bool bEnabled);  // Enable R/G channel swap for BC textures in particle shader
 
 	void SetTwoTextureBlend(bool bEnabled);
@@ -595,6 +593,7 @@ public:
 	// Texture Factor (for color modulation)
 	void SetSkyTint(DWORD dwColor);
 	void SetParticleColor(DWORD dwColor);
+	void SetMeshTextureAlphaEnabled(bool bEnabled);
 	void SetCharacterShadowPass(bool bEnabled);
 
 	// Commit pending constant buffer updates

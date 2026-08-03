@@ -384,10 +384,6 @@ void CGrannyMaterial::__RestoreDiffuseRenderState()
 
 void CGrannyMaterial::__ApplySpecularRenderState()
 {
-#ifdef ENABLE_RENDER_MODE_GROUPING
-	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, FALSE);
-#endif
-
 	if (TRUE == SHADERMANAGER.GetPipelineState(PSTATE_BLENDENABLE))
 	{
 		__ApplyDiffuseRenderState();
@@ -431,8 +427,6 @@ void CGrannyMaterial::__ApplySpecularRenderState()
 		SHADERMANAGER.SetSpecularTune(s_fSpecIntensity, s_fSpecPower);
 	}
 
-	// PBR: sphere-mapped materials have slight metallic hint
-	SHADERMANAGER.SetPBRMetallic(0.15f);
 
 	if (m_bTwoSideRender)
 	{
@@ -449,8 +443,6 @@ void CGrannyMaterial::__RestoreSpecularRenderState()
 		return;
 	}
 
-	// PBR: reset metallic
-	SHADERMANAGER.SetPBRMetallic(0.0f);
 
 	if (m_bTwoSideRender)
 	{
