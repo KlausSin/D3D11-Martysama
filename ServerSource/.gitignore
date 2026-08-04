@@ -1,0 +1,28 @@
+# build output
+*.o
+*.a
+*.so
+*.lo
+*.obj
+.obj/
+Depend
+core
+
+# built binaries / symlinks to them
+Server/game/game_r*
+Server/db/db_r*
+Server/game/game_symlink
+Server/db/db_symlink
+
+# archives
+*.tar.gz
+
+# MSVC user state
+*.suo
+*.user
+*.vssscc
+*.vspscc
+.vs/
+Debug/
+Release/
+x64/
