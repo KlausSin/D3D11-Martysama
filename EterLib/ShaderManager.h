@@ -31,6 +31,8 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 using namespace DirectX;
+#include <wrl/client.h>
+using namespace Microsoft::WRL;
 
 //////////////////////////////////////////////////////////////////////////
 // Shader Type Enumeration
@@ -76,13 +78,13 @@ enum EShaderType
 // Particle colour operation (values come straight from the effect data)
 enum EParticleColorOp
 {
-	PARTICLE_COLOROP_DISABLE    = 1,
+	PARTICLE_COLOROP_DISABLE = 1,
 	PARTICLE_COLOROP_SELECTARG1 = 2,
 	PARTICLE_COLOROP_SELECTARG2 = 3,
-	PARTICLE_COLOROP_MODULATE   = 4,
+	PARTICLE_COLOROP_MODULATE = 4,
 	PARTICLE_COLOROP_MODULATE2X = 5,
 	PARTICLE_COLOROP_MODULATE4X = 6,
-	PARTICLE_COLOROP_ADD        = 7,
+	PARTICLE_COLOROP_ADD = 7,
 };
 
 enum EComputeShader
@@ -99,8 +101,8 @@ enum EComputeShader
 //////////////////////////////////////////////////////////////////////////
 struct GpuBuffer
 {
-	ID3D11Buffer*              pBuffer;
-	ID3D11ShaderResourceView*  pSRV;
+	ID3D11Buffer* pBuffer;
+	ID3D11ShaderResourceView* pSRV;
 	ID3D11UnorderedAccessView* pUAV;
 	UINT elementCount;
 	UINT elementSize;
@@ -361,7 +363,7 @@ struct SamplerSlotState
 };
 
 static const UINT CB_RING_SLOTS_PEROBJECT = 256;
-static const UINT CB_RING_SLOTS_SKINNING  = 64;
+static const UINT CB_RING_SLOTS_SKINNING = 64;
 inline UINT CBRingAlign256(UINT n) { return (n + 255u) & ~255u; }
 
 //////////////////////////////////////////////////////////////////////////
@@ -600,13 +602,13 @@ public:
 	void CommitChanges();
 
 	void __CommitCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceContext1* pCtx1,
-	                    ID3D11Buffer* pBuf, UINT& rOffset, UINT& rBound, UINT ringBytes,
-	                    const void* pSrc, UINT srcBytes, int vsSlot, int psSlot,
-	                    bool* pForceDiscard = nullptr);
+		ID3D11Buffer* pBuf, UINT& rOffset, UINT& rBound, UINT ringBytes,
+		const void* pSrc, UINT srcBytes, int vsSlot, int psSlot,
+		bool* pForceDiscard = nullptr);
 
 	void __BindCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceContext1* pCtx1,
-	                  ID3D11Buffer* pBuf, UINT boundOffset, UINT srcBytes,
-	                  int vsSlot, int psSlot, bool bRing);
+		ID3D11Buffer* pBuf, UINT boundOffset, UINT srcBytes,
+		int vsSlot, int psSlot, bool bRing);
 
 	//--------------------------------------------------------------------
 	// Texture Binding
@@ -754,32 +756,32 @@ public:
 	static void ResetSubsystemDrawCount() { t_subsystemDrawCount = 0; }
 	static UINT GetSubsystemDrawCount() { return t_subsystemDrawCount; }
 
-	void SnapshotPhase0_AfterShadow()    { m_drawPhase0 = m_globalDrawCount; }
-	void SnapshotPhase1_AfterWorkers()   { m_drawPhase1 = m_globalDrawCount; }
-	void SnapshotPhase2_AfterWater()     { m_drawPhase2 = m_globalDrawCount; }
-	UINT GetPhaseDraws_Shadow()  const   { return m_drawPhase0; }
-	UINT GetPhaseDraws_Workers() const   { return m_drawPhase1 >= m_drawPhase0 ? m_drawPhase1 - m_drawPhase0 : 0; }
-	UINT GetPhaseDraws_Water()   const   { return m_drawPhase2 >= m_drawPhase1 ? m_drawPhase2 - m_drawPhase1 : 0; }
+	void SnapshotPhase0_AfterShadow() { m_drawPhase0 = m_globalDrawCount; }
+	void SnapshotPhase1_AfterWorkers() { m_drawPhase1 = m_globalDrawCount; }
+	void SnapshotPhase2_AfterWater() { m_drawPhase2 = m_globalDrawCount; }
+	UINT GetPhaseDraws_Shadow()  const { return m_drawPhase0; }
+	UINT GetPhaseDraws_Workers() const { return m_drawPhase1 >= m_drawPhase0 ? m_drawPhase1 - m_drawPhase0 : 0; }
+	UINT GetPhaseDraws_Water()   const { return m_drawPhase2 >= m_drawPhase1 ? m_drawPhase2 - m_drawPhase1 : 0; }
 	UINT GetPhaseDraws_AfterWater() const { return m_globalDrawCount >= m_drawPhase2 ? m_globalDrawCount - m_drawPhase2 : 0; }
 
 	UINT terrainJobDraws = 0;
 	UINT characterJobDraws = 0;
 	UINT effectJobDraws = 0;
-	void StoreTerrainJobDraws(UINT n)   { terrainJobDraws = n; }
+	void StoreTerrainJobDraws(UINT n) { terrainJobDraws = n; }
 	void StoreCharacterJobDraws(UINT n) { characterJobDraws = n; }
-	void StoreEffectJobDraws(UINT n)    { effectJobDraws = n; }
+	void StoreEffectJobDraws(UINT n) { effectJobDraws = n; }
 
-	double cpuMs_Frame      = 0.0;
-	double cpuMs_Deform     = 0.0;
-	double cpuMs_Shadow     = 0.0;
+	double cpuMs_Frame = 0.0;
+	double cpuMs_Deform = 0.0;
+	double cpuMs_Shadow = 0.0;
 	double cpuMs_WorkerWait = 0.0;
 
-	double cpuMs_Sky        = 0.0;   // RenderSky .. RenderCloud
-	double cpuMs_Terrain    = 0.0;   // m_pyBackground.Render()
-	double cpuMs_Char       = 0.0;   // m_kChrMgr.Render()  (main pass only)
-	double cpuMs_Water      = 0.0;   // refraction copy + reflection pass + RenderWater
-	double cpuMs_Effects    = 0.0;   // RenderEffect + m_kEftMgr.Render()
-	double cpuMs_Misc       = 0.0;   // items, flying, PC blocker, lens flare, state resets
+	double cpuMs_Sky = 0.0;   // RenderSky .. RenderCloud
+	double cpuMs_Terrain = 0.0;   // m_pyBackground.Render()
+	double cpuMs_Char = 0.0;   // m_kChrMgr.Render()  (main pass only)
+	double cpuMs_Water = 0.0;   // refraction copy + reflection pass + RenderWater
+	double cpuMs_Effects = 0.0;   // RenderEffect + m_kEftMgr.Render()
+	double cpuMs_Misc = 0.0;   // items, flying, PC blocker, lens flare, state resets
 
 	//--------------------------------------------------------------------
 	// Fly Trace Compute Shader Billboard System
@@ -869,8 +871,7 @@ public:
 private:
 	// Shader compilation with caching
 	bool CompileAllShaders();
-	bool CompileShader(EShaderType type, const char* szVSCode, const char* szPSCode,
-		const D3D11_INPUT_ELEMENT_DESC* pElements, UINT numElements);
+	bool CompileShader(EShaderType type, const char* szVSCode, const char* szPSCode);
 
 	// Shader cache helpers
 	static UINT ComputeShaderHash(const char* szVSCode, const char* szPSCode);
@@ -888,9 +889,9 @@ private:
 
 private:
 
-	ID3D11Device*           m_pDevice;
-	ID3D11DeviceContext*    m_pContext;
-	ID3D11DeviceContext1*   m_pContext1 = nullptr;
+	ID3D11Device* m_pDevice;
+	ID3D11DeviceContext* m_pContext;
+	ID3D11DeviceContext1* m_pContext1 = nullptr;
 	bool                    m_bCBRingSupported = false;
 	UINT                    m_cbPerObjectOffset = 0;
 	UINT                    m_cbSkinningOffset = 0;
@@ -902,33 +903,36 @@ private:
 	// Shader resources per type
 	struct ShaderProgram
 	{
-		ID3D11VertexShader*  pVertexShader;
-		ID3D11PixelShader*   pPixelShader;
-		ID3D11InputLayout*   pInputLayout;
-		ID3DBlob*            pVSBlob;
+		ID3D11VertexShader* pVertexShader;
+		ID3D11PixelShader* pPixelShader;
+		ID3D11InputLayout* pInputLayout;
+		ID3DBlob* pVSBlob;
 
 		ShaderProgram() : pVertexShader(nullptr), pPixelShader(nullptr),
-			pInputLayout(nullptr), pVSBlob(nullptr) {}
+			pInputLayout(nullptr), pVSBlob(nullptr) {
+		}
 	};
 
-	ShaderProgram m_Shaders[SHADER_COUNT];
+	ShaderProgram m_Shaders[SHADER_COUNT]{};
 	EShaderType   m_eCurrentShader;
 
 	// Constant buffers
-	ID3D11Buffer* m_pCBPerFrame;
-	ID3D11Buffer* m_pCBPerObject;
-	ID3D11Buffer* m_pCBLighting;
-	ID3D11Buffer* m_pCBSpeedTree;
-	ID3D11Buffer* m_pCBSkinning;
-	ID3D11Buffer* m_pCBGodRays;
-	CBPerFrame    m_cbPerFrame;
-	CBPerObject   m_cbPerObject;
-	CBLighting    m_cbLighting;
-	CBSpeedTree   m_cbSpeedTree;
-	CBSkinning    m_cbSkinning;
-	CBGodRays     m_cbGodRays;
-	ID3D11Buffer* m_pCBSkyGradient;
-	CBSkyGradient m_cbSkyGradient;
+	ComPtr<ID3D11Buffer> m_pCBPerFrame = nullptr;
+	ComPtr<ID3D11Buffer> m_pCBPerObject = nullptr;
+	ComPtr<ID3D11Buffer> m_pCBLighting = nullptr;
+	ComPtr<ID3D11Buffer> m_pCBSpeedTree = nullptr;
+	ComPtr<ID3D11Buffer> m_pCBSkinning = nullptr;
+	ComPtr<ID3D11Buffer> m_pCBGodRays = nullptr;
+
+	CBPerFrame    m_cbPerFrame{};
+	CBPerObject   m_cbPerObject{};
+	CBLighting    m_cbLighting{};
+	CBSpeedTree   m_cbSpeedTree{};
+	CBSkinning    m_cbSkinning{};
+	CBGodRays     m_cbGodRays{};
+
+	ComPtr<ID3D11Buffer> m_pCBSkyGradient = nullptr;
+	CBSkyGradient m_cbSkyGradient{};
 	bool          m_bSkyGradientDirty;
 	bool          m_bPerFrameDirty;
 
@@ -943,40 +947,40 @@ private:
 	bool          m_bGodRaysEnabled;
 #ifdef ENABLE_BLOOM
 	ID3D11Buffer* m_pCBBloom;
-	CBBloom       m_cbBloom;
+	CBBloom       m_cbBloom{};
 	bool          m_bBloomEnabled;
 #endif
 #ifdef ENABLE_SSAO
 	ID3D11Buffer* m_pCBSSAO;
-	CBSSAO        m_cbSSAO;
+	CBSSAO        m_cbSSAO{};
 	bool          m_bSSAODirty;
-	ID3D11Texture2D*          m_pSSAONoiseTex;
+	ID3D11Texture2D* m_pSSAONoiseTex;
 	ID3D11ShaderResourceView* m_pSSAONoiseSRV;
 #endif
 
 
 	// Default resources
-	ID3D11Texture2D*          m_pDefaultTexture;        // White texture for UI solid color rendering
+	ID3D11Texture2D* m_pDefaultTexture;        // White texture for UI solid color rendering
 	ID3D11ShaderResourceView* m_pDefaultTextureSRV;
-	ID3D11Texture2D*          m_pTransparentTexture;    // Transparent texture for null fallback
+	ID3D11Texture2D* m_pTransparentTexture;    // Transparent texture for null fallback
 	ID3D11ShaderResourceView* m_pTransparentTextureSRV;
 	ID3D11ShaderResourceView* m_pActiveDefaultTextureSRV;  // Active pointer that switches between transparent/white
-	ID3D11SamplerState*       m_pSamplerLinear;
-	ID3D11SamplerState*       m_pSamplerPoint;
-	ID3D11SamplerState*       m_pSamplerClamp;
-	ID3D11SamplerState*       m_pSamplerShadowCmp;   // hardware PCF comparison sampler (s2)
+	ID3D11SamplerState* m_pSamplerLinear;
+	ID3D11SamplerState* m_pSamplerPoint;
+	ID3D11SamplerState* m_pSamplerClamp;
+	ID3D11SamplerState* m_pSamplerShadowCmp;   // hardware PCF comparison sampler (s2)
 
 	//--------------------------------------------------------------------
 	// Render State Management (moved from StateManager)
 	//--------------------------------------------------------------------
-	CStateObjectCache*        m_pStateCache;
+	CStateObjectCache* m_pStateCache;
 
 	PendingRenderState        m_RenderState;
 
 	// Current state objects
-	ID3D11BlendState*         m_pCurrentBlendState;
-	ID3D11RasterizerState*    m_pCurrentRasterizerState;
-	ID3D11DepthStencilState*  m_pCurrentDepthStencilState;
+	ID3D11BlendState* m_pCurrentBlendState;
+	ID3D11RasterizerState* m_pCurrentRasterizerState;
+	ID3D11DepthStencilState* m_pCurrentDepthStencilState;
 
 	// Dirty flags
 	bool                      m_bBlendStateDirty;
@@ -988,8 +992,8 @@ private:
 
 	// Transform matrices
 	static const DWORD MAX_TRANSFORMS = 300;
-	Matrix                    m_Matrices[MAX_TRANSFORMS];
-	Matrix                    m_SavedMatrices[MAX_TRANSFORMS];
+	Matrix                    m_Matrices[MAX_TRANSFORMS]{};
+	Matrix                    m_SavedMatrices[MAX_TRANSFORMS]{};
 
 	// Stream data
 	static const DWORD MAX_STREAMS = 16;
@@ -999,21 +1003,21 @@ private:
 		UINT offset;
 		StreamData() : pBuffer(nullptr), stride(0), offset(0) {}
 	};
-	StreamData                m_Streams[MAX_STREAMS];
-	ID3D11Buffer*             m_pCurrentIndexBuffer;
+	StreamData                m_Streams[MAX_STREAMS]{};
+	ID3D11Buffer* m_pCurrentIndexBuffer;
 	DXGI_FORMAT               m_IndexFormat;
 	UINT                      m_IndexOffset;
 
 	D3D11_PRIMITIVE_TOPOLOGY  m_CurrentTopology;
 
-	ID3D11Buffer*             m_pDynamicVertexBuffer;
-	ID3D11Buffer*             m_pDynamicIndexBuffer;
+	ID3D11Buffer* m_pDynamicVertexBuffer;
+	ID3D11Buffer* m_pDynamicIndexBuffer;
 	DWORD                     m_dwDynamicVBOffset;       // Current write position
 	DWORD                     m_dwDynamicIBOffset;       // Current write position
 	bool                      m_bDynamicBufferNeedsDiscard;  // True at frame start
 
 	static const UINT         SKINNING_CB_POOL_SIZE = 256;
-	ID3D11Buffer*             m_pSkinningCBPool[SKINNING_CB_POOL_SIZE];
+	ID3D11Buffer* m_pSkinningCBPool[SKINNING_CB_POOL_SIZE]{};
 	UINT                      m_dwSkinningPoolIndex;
 
 	// Cross-PSI particle batcher storage
@@ -1027,29 +1031,29 @@ private:
 	UINT                      m_drawPhase2 = 0;
 
 	// Compute shaders
-	ID3D11ComputeShader*      m_ComputeShaders[CS_COUNT];
+	ID3D11ComputeShader* m_ComputeShaders[CS_COUNT]{};
 
 	// Particle CS resources
 	GpuBuffer                 m_particleCSInput;      // Structured buffer (CPU write, SRV)
 	GpuBuffer                 m_particleCSOutput;     // Raw VB+UAV buffer
-	ID3D11Buffer*             m_pCBParticleCS;        // Particle CS constant buffer
-	ID3D11Buffer*             m_pParticleCSIB;        // Index buffer for CS output quads
-	CBParticleCS              m_cbParticleCS;          // CPU-side CB data
+	ID3D11Buffer* m_pCBParticleCS;        // Particle CS constant buffer
+	ID3D11Buffer* m_pParticleCSIB;        // Index buffer for CS output quads
+	CBParticleCS              m_cbParticleCS{};          // CPU-side CB data
 	bool                      m_bComputeParticlesAvailable;
 
 	// FlyTrace CS resources
 	GpuBuffer                 m_flyTraceCSInput;      // Structured buffer (CPU write, SRV)
 	GpuBuffer                 m_flyTraceCSOutput;     // Raw VB+UAV buffer
-	ID3D11Buffer*             m_pCBFlyTraceCS;        // FlyTrace CS constant buffer
-	ID3D11Buffer*             m_pFlyTraceCSIB;        // Index buffer for CS output segments
-	CBFlyTraceCS              m_cbFlyTraceCS;          // CPU-side CB data
+	ID3D11Buffer* m_pCBFlyTraceCS;        // FlyTrace CS constant buffer
+	ID3D11Buffer* m_pFlyTraceCSIB;        // Index buffer for CS output segments
+	CBFlyTraceCS              m_cbFlyTraceCS{};          // CPU-side CB data
 	bool                      m_bFlyTraceCSAvailable;
 
 	// WeaponTrace CS resources
 	GpuBuffer                 m_weaponTraceCSInput;   // Structured buffer (short+long segments, CPU write, SRV)
 	GpuBuffer                 m_weaponTraceCSOutput;  // Raw VB+UAV buffer (triangle strip vertices)
-	ID3D11Buffer*             m_pCBWeaponTraceCS;     // WeaponTrace CS constant buffer
-	CBWeaponTraceCS           m_cbWeaponTraceCS;       // CPU-side CB data
+	ID3D11Buffer* m_pCBWeaponTraceCS;     // WeaponTrace CS constant buffer
+	CBWeaponTraceCS           m_cbWeaponTraceCS{};       // CPU-side CB data
 	bool                      m_bWeaponTraceCSAvailable;
 
 	// Input layout
@@ -1063,17 +1067,17 @@ private:
 	DWORD                     m_dwAlphaTestRef;
 
 	// Saved material for Save/Restore pattern
-	TMaterial                 m_CurrentMaterial;
-	TMaterial                 m_SavedMaterial;
+	TMaterial                 m_CurrentMaterial{};
+	TMaterial                 m_SavedMaterial{};
 
 	// Sampler state storage
 	static const DWORD MAX_SAMPLER_SLOTS = 8;
 	static const DWORD STATEMANAGER_MAX_STAGES = 8;  // Max texture stages
-	SamplerSlotState        m_SamplerStates[MAX_SAMPLER_SLOTS];
+	SamplerSlotState        m_SamplerStates[MAX_SAMPLER_SLOTS]{};
 	std::unordered_map<UINT, std::unordered_map<ESamplerState, DWORD>> m_SavedSamplerStates;
 
 	// Texture slots
-	ID3D11ShaderResourceView* m_pTextures[STATEMANAGER_MAX_STAGES];
+	ID3D11ShaderResourceView* m_pTextures[STATEMANAGER_MAX_STAGES]{};
 
 	// Texture factor color
 	bool                      m_bTwoTextureBlend;

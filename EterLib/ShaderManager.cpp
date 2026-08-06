@@ -3596,12 +3596,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 }
 )";
 
-static const D3D11_INPUT_ELEMENT_DESC g_GodRaysInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-
 #ifdef ENABLE_BLOOM
 
 static const char* g_szBloomBrightPS = R"(
@@ -4125,13 +4119,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 }
 )";
 
-static const D3D11_INPUT_ELEMENT_DESC g_MeshVTFInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-
 static const char* g_szShadowVTFVertexShader = R"(
 cbuffer CBPerFrame : register(b0)
 {
@@ -4238,14 +4225,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	return float4(input.Depth, 0, 0, 1);
 }
 )";
-
-// Shadow VTF input layout: same as shadow (PNT)
-static const D3D11_INPUT_ELEMENT_DESC g_ShadowVTFInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
 
 static const char* g_szSpeedTreeVTFVertexShader = R"(
 cbuffer CBPerFrame : register(b0)
@@ -4399,15 +4378,6 @@ float4 main(PS_INPUT input) : SV_TARGET
 	return finalColor;
 }
 )";
-
-static const D3D11_INPUT_ELEMENT_DESC g_SpeedTreeVTFInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 2, DXGI_FORMAT_R32G32_FLOAT,    0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
 
 static const char* g_szMesh2TexVTFVertexShader = R"(
 cbuffer CBPerFrame : register(b0)
@@ -4607,105 +4577,84 @@ float4 main(PS_INPUT input) : SV_TARGET
 }
 )";
 
-static const D3D11_INPUT_ELEMENT_DESC g_Mesh2TexVTFInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT,    0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-//////////////////////////////////////////////////////////////////////////
-// Input Layout Definitions
-//////////////////////////////////////////////////////////////////////////
-
-static const D3D11_INPUT_ELEMENT_DESC g_UIInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},  // Colour is BGRA in memory
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_MeshInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_Mesh2TexInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT,    0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_TerrainInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_WaterInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},  // Colour is BGRA in memory
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_SkyInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_ParticleInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-// PDT input layout for effects (same as particle)
-static const D3D11_INPUT_ELEMENT_DESC g_PDTInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-// Shadow shader uses same layout as Mesh (PNT vertices)
-static const D3D11_INPUT_ELEMENT_DESC g_ShadowInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_SpeedTreeInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},  // 12 bytes
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 4 bytes
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 8 bytes
-	{"TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 8 bytes (shadow coords)
-	{"TEXCOORD", 2, DXGI_FORMAT_R32G32_FLOAT,    0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 8 bytes (wind index + weight)
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_SpeedTreeLeafInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},  // 12 bytes
-	{"COLOR",    0, DXGI_FORMAT_B8G8R8A8_UNORM,     0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 4 bytes
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 8 bytes
-	{"TEXCOORD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 16 bytes (wind/leaf data)
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_MeshNormalInputLayout[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0},
-};
-
-static const D3D11_INPUT_ELEMENT_DESC g_SkinnedMeshInputLayout[] = {
-	{"POSITION",     0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0},  // 12 bytes
-	{"NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 12 bytes
-	{"TEXCOORD",     0, DXGI_FORMAT_R32G32_FLOAT,       0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 8 bytes
-	{"BLENDWEIGHT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 16 bytes (4 weights)
-	{"BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0},  // 4 bytes (4 indices)
-};
-
 //////////////////////////////////////////////////////////////////////////
 // CShaderManager Implementation
 //////////////////////////////////////////////////////////////////////////
+
+
+static DXGI_FORMAT GetFloatFormat(UINT mask)
+{
+	if (mask == 1) return DXGI_FORMAT_R32_FLOAT;
+	if (mask <= 3) return DXGI_FORMAT_R32G32_FLOAT;
+	if (mask <= 7) return DXGI_FORMAT_R32G32B32_FLOAT;
+	if (mask <= 15) return DXGI_FORMAT_R32G32B32A32_FLOAT;
+	return DXGI_FORMAT_UNKNOWN;
+}
+
+static DXGI_FORMAT GetUIntFormat(UINT mask)
+{
+	if (mask == 1) return DXGI_FORMAT_R32_UINT;
+	if (mask <= 3) return DXGI_FORMAT_R32G32_UINT;
+	if (mask <= 7) return DXGI_FORMAT_R32G32B32_UINT;
+	if (mask <= 15) return DXGI_FORMAT_R32G32B32A32_UINT;
+	return DXGI_FORMAT_UNKNOWN;
+}
+
+static DXGI_FORMAT GetSIntFormat(UINT mask)
+{
+	if (mask == 1) return DXGI_FORMAT_R32_SINT;
+	if (mask <= 3) return DXGI_FORMAT_R32G32_SINT;
+	if (mask <= 7) return DXGI_FORMAT_R32G32B32_SINT;
+	if (mask <= 15) return DXGI_FORMAT_R32G32B32A32_SINT;
+	return DXGI_FORMAT_UNKNOWN;
+}
+
+static DXGI_FORMAT GetDXGIFormat(const D3D11_SIGNATURE_PARAMETER_DESC& desc)
+{
+	if (_stricmp(desc.SemanticName, "COLOR") == 0)
+		return DXGI_FORMAT_B8G8R8A8_UNORM; //DWORD color format for vertex colors
+	if (_stricmp(desc.SemanticName, "BLENDINDICES") == 0)
+		return DXGI_FORMAT_R8G8B8A8_UINT;
+
+	switch (desc.ComponentType)
+	{
+		case D3D_REGISTER_COMPONENT_FLOAT32: return GetFloatFormat(desc.Mask);
+		case D3D_REGISTER_COMPONENT_UINT32: return GetUIntFormat(desc.Mask);
+		case D3D_REGISTER_COMPONENT_SINT32: return GetSIntFormat(desc.Mask);
+		default: return DXGI_FORMAT_UNKNOWN;
+	}
+}
+
+HRESULT CreateShaderReflection(ComPtr<ID3DBlob> shaderBlob, std::vector<D3D11_INPUT_ELEMENT_DESC>& layout)
+{
+	static std::vector<std::string> semanticNames;
+	layout.clear(); semanticNames.clear();
+
+	ComPtr<ID3D11ShaderReflection> r;
+#if _MSC_VER >= 1910 && _MSC_VER <= 1916 //vs 2017 v141
+	HRESULT hr = D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_ID3D11ShaderReflection, reinterpret_cast<void**>(&r));
+#elif _MSC_VER >= 1930 && _MSC_VER < 1950 //vs 2022 v143
+	HRESULT hr = D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_PPV_ARGS(&r));
+#elif _MSC_VER >= 1950 //vs 2026 v145
+	HRESULT hr = D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), IID_PPV_ARGS(&r));
+#endif
+
+	if (FAILED(hr))
+		return E_FAIL;
+
+	D3D11_SHADER_DESC sd{}; r->GetDesc(&sd);
+	layout.reserve(sd.InputParameters);
+	semanticNames.reserve(sd.InputParameters);
+
+	for (UINT i = 0; i < sd.InputParameters; ++i)
+	{
+		D3D11_SIGNATURE_PARAMETER_DESC p{};
+		r->GetInputParameterDesc(i, &p);
+		semanticNames.emplace_back(p.SemanticName);
+		layout.push_back({ semanticNames.back().c_str(), p.SemanticIndex, GetDXGIFormat(p), 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 });
+	}
+	return hr;
+}
 
 thread_local UINT CShaderManager::t_subsystemDrawCount = 0;
 
@@ -4716,13 +4665,6 @@ CShaderManager::CShaderManager()
 	, m_iFrameCount(0)
 	, m_eCurrentShader(SHADER_NONE)
 	, m_CurrentTopology(D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED)
-	, m_pCBPerFrame(nullptr)
-	, m_pCBPerObject(nullptr)
-	, m_pCBLighting(nullptr)
-	, m_pCBSpeedTree(nullptr)
-	, m_pCBSkinning(nullptr)
-	, m_pCBGodRays(nullptr)
-	, m_pCBSkyGradient(nullptr)
 	, m_bSkyGradientDirty(false)
 	, m_bPerFrameDirty(true)
 	, m_bPerObjectDirty(true)
@@ -4788,32 +4730,12 @@ CShaderManager::CShaderManager()
 	, m_pCBWeaponTraceCS(nullptr)
 	, m_bWeaponTraceCSAvailable(false)
 {
-	ZeroMemory(m_ComputeShaders, sizeof(m_ComputeShaders));
-	ZeroMemory(&m_cbParticleCS, sizeof(m_cbParticleCS));
-	ZeroMemory(&m_cbFlyTraceCS, sizeof(m_cbFlyTraceCS));
-	ZeroMemory(&m_cbWeaponTraceCS, sizeof(m_cbWeaponTraceCS));
-	ZeroMemory(m_pSkinningCBPool, sizeof(m_pSkinningCBPool));
-	ZeroMemory(&m_cbPerFrame, sizeof(m_cbPerFrame));
-	ZeroMemory(&m_cbPerObject, sizeof(m_cbPerObject));
-	ZeroMemory(&m_cbLighting, sizeof(m_cbLighting));
-	ZeroMemory(&m_cbSpeedTree, sizeof(m_cbSpeedTree));
-#ifdef ENABLE_SSAO
-	ZeroMemory(&m_cbSSAO, sizeof(m_cbSSAO));
-#endif
-	ZeroMemory(m_Shaders, sizeof(m_Shaders));
 
 	// Initialize SpeedTree wind matrices to identity
 	for (int i = 0; i < SPEEDTREE_NUM_WIND_MATRICES; ++i)
 	{
 		m_cbSpeedTree.matWindMatrices[i] = XMMatrixIdentity();
 	}
-	ZeroMemory(m_Streams, sizeof(m_Streams));
-	ZeroMemory(m_Matrices, sizeof(m_Matrices));
-	ZeroMemory(m_SavedMatrices, sizeof(m_SavedMatrices));
-	ZeroMemory(&m_CurrentMaterial, sizeof(m_CurrentMaterial));
-	ZeroMemory(&m_SavedMaterial, sizeof(m_SavedMaterial));
-	ZeroMemory(m_SamplerStates, sizeof(m_SamplerStates));
-	ZeroMemory(m_pTextures, sizeof(m_pTextures));
 
 	// Initialize sampler states to defaults
 	for (DWORD i = 0; i < MAX_SAMPLER_SLOTS; ++i)
@@ -4899,8 +4821,8 @@ bool CShaderManager::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCon
 		if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS, &opts, sizeof(opts))))
 		{
 			m_bCBRingSupported = (m_pContext1 != nullptr)
-			                  && opts.ConstantBufferOffsetting
-			                  && opts.MapNoOverwriteOnDynamicConstantBuffer;
+				&& opts.ConstantBufferOffsetting
+				&& opts.MapNoOverwriteOnDynamicConstantBuffer;
 		}
 
 		m_bCBRingSupported = false;
@@ -5019,16 +4941,17 @@ void CShaderManager::Shutdown()
 		if (m_ComputeShaders[i]) { m_ComputeShaders[i]->Release(); m_ComputeShaders[i] = nullptr; }
 	}
 
-	if (m_pCBPerFrame) { m_pCBPerFrame->Release(); m_pCBPerFrame = nullptr; }
-	if (m_pCBPerObject) { m_pCBPerObject->Release(); m_pCBPerObject = nullptr; }
-	if (m_pCBLighting) { m_pCBLighting->Release(); m_pCBLighting = nullptr; }
-	if (m_pCBSpeedTree) { m_pCBSpeedTree->Release(); m_pCBSpeedTree = nullptr; }
-	if (m_pCBSkinning) { m_pCBSkinning->Release(); m_pCBSkinning = nullptr; }
+	if (m_pCBPerFrame) { m_pCBPerFrame.Reset(); }
+	if (m_pCBPerObject) { m_pCBPerObject.Reset(); }
+	if (m_pCBLighting) { m_pCBLighting.Reset(); }
+	if (m_pCBSpeedTree) { m_pCBSpeedTree.Reset(); }
+	if (m_pCBSkinning) { m_pCBSkinning.Reset(); }
+
 	for (UINT i = 0; i < SKINNING_CB_POOL_SIZE; ++i)
 	{
 		if (m_pSkinningCBPool[i]) { m_pSkinningCBPool[i]->Release(); m_pSkinningCBPool[i] = nullptr; }
 	}
-	if (m_pCBGodRays) { m_pCBGodRays->Release(); m_pCBGodRays = nullptr; }
+	if (m_pCBGodRays) { m_pCBGodRays.Reset(); }
 #ifdef ENABLE_BLOOM
 	if (m_pCBBloom) { m_pCBBloom->Release(); m_pCBBloom = nullptr; }
 #endif
@@ -5037,7 +4960,8 @@ void CShaderManager::Shutdown()
 	if (m_pSSAONoiseSRV) { m_pSSAONoiseSRV->Release(); m_pSSAONoiseSRV = nullptr; }
 	if (m_pSSAONoiseTex) { m_pSSAONoiseTex->Release(); m_pSSAONoiseTex = nullptr; }
 #endif
-	if (m_pCBSkyGradient) { m_pCBSkyGradient->Release(); m_pCBSkyGradient = nullptr; }
+	if (m_pCBSkyGradient) { m_pCBSkyGradient.Reset(); }
+
 	if (m_pDefaultTextureSRV) { m_pDefaultTextureSRV->Release(); m_pDefaultTextureSRV = nullptr; }
 	if (m_pDefaultTexture) { m_pDefaultTexture->Release(); m_pDefaultTexture = nullptr; }
 	if (m_pTransparentTextureSRV) { m_pTransparentTextureSRV->Release(); m_pTransparentTextureSRV = nullptr; }
@@ -5147,72 +5071,72 @@ bool CShaderManager::CompileAllShaders()
 
 	bool bSuccess = true;
 
-	if (!CompileShader(SHADER_UI, g_szUIVertexShader, g_szUIPixelShader, g_UIInputLayout, ARRAYSIZE(g_UIInputLayout)))
+	if (!CompileShader(SHADER_UI, g_szUIVertexShader, g_szUIPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_UI]);
 		bSuccess = false;
 	}
 	{
-		if (!CompileShader(SHADER_MESH, g_szMeshVertexShader, g_szMeshPixelShader, g_MeshInputLayout, ARRAYSIZE(g_MeshInputLayout)))
+		if (!CompileShader(SHADER_MESH, g_szMeshVertexShader, g_szMeshPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_MESH]);
 			bSuccess = false;
 		}
 	}
 	{
-		if (!CompileShader(SHADER_MESH_2TEX, g_szMesh2TexVertexShader, g_szMesh2TexPixelShader, g_Mesh2TexInputLayout, ARRAYSIZE(g_Mesh2TexInputLayout)))
+		if (!CompileShader(SHADER_MESH_2TEX, g_szMesh2TexVertexShader, g_szMesh2TexPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_MESH_2TEX]);
 			bSuccess = false;
 		}
 	}
 	{
-		if (!CompileShader(SHADER_TERRAIN, g_szTerrainVertexShader, g_szTerrainPixelShader, g_TerrainInputLayout, ARRAYSIZE(g_TerrainInputLayout)))
+		if (!CompileShader(SHADER_TERRAIN, g_szTerrainVertexShader, g_szTerrainPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_TERRAIN]);
 			bSuccess = false;
 		}
 	}
 	{
-		if (!CompileShader(SHADER_WATER, g_szWaterVertexShader, g_szWaterPixelShader, g_WaterInputLayout, ARRAYSIZE(g_WaterInputLayout)))
+		if (!CompileShader(SHADER_WATER, g_szWaterVertexShader, g_szWaterPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_WATER]);
 			bSuccess = false;
 		}
 	}
-	if (!CompileShader(SHADER_SKY, g_szSkyVertexShader, g_szSkyPixelShader, g_SkyInputLayout, ARRAYSIZE(g_SkyInputLayout)))
+	if (!CompileShader(SHADER_SKY, g_szSkyVertexShader, g_szSkyPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_SKY]);
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_PARTICLE, g_szParticleVertexShader, g_szParticlePixelShader, g_ParticleInputLayout, ARRAYSIZE(g_ParticleInputLayout)))
+	if (!CompileShader(SHADER_PARTICLE, g_szParticleVertexShader, g_szParticlePixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_PARTICLE]);
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_SHADOW, g_szShadowVertexShader, g_szShadowPixelShader, g_ShadowInputLayout, ARRAYSIZE(g_ShadowInputLayout)))
+	if (!CompileShader(SHADER_SHADOW, g_szShadowVertexShader, g_szShadowPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_SHADOW]);
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_SHADOW_SKINNED, g_szShadowSkinnedVertexShader, g_szShadowSkinnedPixelShader, g_SkinnedMeshInputLayout, ARRAYSIZE(g_SkinnedMeshInputLayout)))
+	if (!CompileShader(SHADER_SHADOW_SKINNED, g_szShadowSkinnedVertexShader, g_szShadowSkinnedPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_SHADOW_SKINNED]);
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_SPEEDTREE, g_szSpeedTreeVertexShader, g_szSpeedTreePixelShader, g_SpeedTreeInputLayout, ARRAYSIZE(g_SpeedTreeInputLayout)))
+	if (!CompileShader(SHADER_SPEEDTREE, g_szSpeedTreeVertexShader, g_szSpeedTreePixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_SPEEDTREE]);
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_SPEEDTREE_LEAF, g_szSpeedTreeLeafVertexShader, g_szSpeedTreeLeafPixelShader, g_SpeedTreeLeafInputLayout, ARRAYSIZE(g_SpeedTreeLeafInputLayout)))
+	if (!CompileShader(SHADER_SPEEDTREE_LEAF, g_szSpeedTreeLeafVertexShader, g_szSpeedTreeLeafPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_SPEEDTREE_LEAF]);
 		bSuccess = false;
 	}
 	// Normal mapped mesh shader
 	{
-		if (!CompileShader(SHADER_MESH_NORMAL, g_szMeshNormalVS, g_szMeshNormalPS, g_MeshNormalInputLayout, ARRAYSIZE(g_MeshNormalInputLayout)))
+		if (!CompileShader(SHADER_MESH_NORMAL, g_szMeshNormalVS, g_szMeshNormalPS))
 		{
 			TraceError("CompileAllShaders: Failed to compile %s shader", s_ShaderNames[SHADER_MESH_NORMAL]);
 			bSuccess = false;
@@ -5220,30 +5144,30 @@ bool CShaderManager::CompileAllShaders()
 	}
 	// GPU Skinned mesh shader
 	{
-		if (!CompileShader(SHADER_MESH_SKINNED, g_szSkinnedMeshVertexShader, g_szSkinnedMeshPixelShader, g_SkinnedMeshInputLayout, ARRAYSIZE(g_SkinnedMeshInputLayout)))
+		if (!CompileShader(SHADER_MESH_SKINNED, g_szSkinnedMeshVertexShader, g_szSkinnedMeshPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile MeshSkinned shader");
 			bSuccess = false;
 		}
 	}
 	// God Rays post-process shader
-	if (!CompileShader(SHADER_GODRAYS, g_szGodRaysVertexShader, g_szGodRaysPixelShader, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_GODRAYS, g_szGodRaysVertexShader, g_szGodRaysPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile GodRays shader");
 		bSuccess = false;
 	}
 #ifdef ENABLE_BLOOM
-	if (!CompileShader(SHADER_BLOOM_BRIGHT, g_szGodRaysVertexShader, g_szBloomBrightPS, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_BLOOM_BRIGHT, g_szGodRaysVertexShader, g_szBloomBrightPS))
 	{
 		TraceError("CompileAllShaders: Failed to compile BloomBright shader");
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_BLOOM_BLUR, g_szGodRaysVertexShader, g_szBloomBlurPS, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_BLOOM_BLUR, g_szGodRaysVertexShader, g_szBloomBlurPS))
 	{
 		TraceError("CompileAllShaders: Failed to compile BloomBlur shader");
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_BLOOM_COMPOSITE, g_szGodRaysVertexShader, g_szBloomCompositePS, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_BLOOM_COMPOSITE, g_szGodRaysVertexShader, g_szBloomCompositePS))
 	{
 		TraceError("CompileAllShaders: Failed to compile BloomComposite shader");
 		bSuccess = false;
@@ -5251,17 +5175,17 @@ bool CShaderManager::CompileAllShaders()
 #endif
 #ifdef ENABLE_SSAO
 	// SSAO shaders (reuse god rays VS + input layout)
-	if (!CompileShader(SHADER_SSAO, g_szGodRaysVertexShader, g_szSSAO_PS, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_SSAO, g_szGodRaysVertexShader, g_szSSAO_PS))
 	{
 		TraceError("CompileAllShaders: Failed to compile SSAO shader");
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_SSAO_BLUR, g_szGodRaysVertexShader, g_szSSAOBlurPS, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_SSAO_BLUR, g_szGodRaysVertexShader, g_szSSAOBlurPS))
 	{
 		TraceError("CompileAllShaders: Failed to compile SSAO Blur shader");
 		bSuccess = false;
 	}
-	if (!CompileShader(SHADER_DEPTH_RESOLVE, g_szGodRaysVertexShader, g_szDepthResolvePS, g_GodRaysInputLayout, ARRAYSIZE(g_GodRaysInputLayout)))
+	if (!CompileShader(SHADER_DEPTH_RESOLVE, g_szGodRaysVertexShader, g_szDepthResolvePS))
 	{
 		TraceError("CompileAllShaders: Failed to compile Depth Resolve shader");
 		bSuccess = false;
@@ -5269,32 +5193,32 @@ bool CShaderManager::CompileAllShaders()
 #endif
 	// VTF Batched Mesh shader (instanced rendering)
 	{
-		if (!CompileShader(SHADER_MESH_VTF, g_szMeshVTFVertexShader, g_szMeshVTFPixelShader, g_MeshVTFInputLayout, ARRAYSIZE(g_MeshVTFInputLayout)))
+		if (!CompileShader(SHADER_MESH_VTF, g_szMeshVTFVertexShader, g_szMeshVTFPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile MeshVTF shader");
 			bSuccess = false;
 		}
 	}
 	// VTF Batched Shadow shader (instanced depth-only)
-	if (!CompileShader(SHADER_SHADOW_VTF, g_szShadowVTFVertexShader, g_szShadowVTFPixelShader, g_ShadowVTFInputLayout, ARRAYSIZE(g_ShadowVTFInputLayout)))
+	if (!CompileShader(SHADER_SHADOW_VTF, g_szShadowVTFVertexShader, g_szShadowVTFPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile ShadowVTF shader");
 		bSuccess = false;
 	}
 	// VTF Batched SpeedTree shader (instanced vegetation)
-	if (!CompileShader(SHADER_SPEEDTREE_VTF, g_szSpeedTreeVTFVertexShader, g_szSpeedTreeVTFPixelShader, g_SpeedTreeVTFInputLayout, ARRAYSIZE(g_SpeedTreeVTFInputLayout)))
+	if (!CompileShader(SHADER_SPEEDTREE_VTF, g_szSpeedTreeVTFVertexShader, g_szSpeedTreeVTFPixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile SpeedTreeVTF shader");
 		bSuccess = false;
 	}
 	{
-		if (!CompileShader(SHADER_MESH_2TEX_VTF, g_szMesh2TexVTFVertexShader, g_szMesh2TexVTFPixelShader, g_Mesh2TexVTFInputLayout, ARRAYSIZE(g_Mesh2TexVTFInputLayout)))
+		if (!CompileShader(SHADER_MESH_2TEX_VTF, g_szMesh2TexVTFVertexShader, g_szMesh2TexVTFPixelShader))
 		{
 			TraceError("CompileAllShaders: Failed to compile Mesh2TexVTF shader");
 			bSuccess = false;
 		}
 	}
-	if (!CompileShader(SHADER_PARTICLE_PCT, g_szParticlePCTVertexShader, g_szParticlePixelShader, g_PDTInputLayout, ARRAYSIZE(g_PDTInputLayout)))
+	if (!CompileShader(SHADER_PARTICLE_PCT, g_szParticlePCTVertexShader, g_szParticlePixelShader))
 	{
 		TraceError("CompileAllShaders: Failed to compile ParticlePCT shader");
 		bSuccess = false;
@@ -5328,7 +5252,7 @@ bool CShaderManager::CompileAllShaders()
 
 const char* CShaderManager::GetShaderCachePath()
 {
-	static char s_szCachePath[MAX_PATH] = {0};
+	static char s_szCachePath[MAX_PATH] = { 0 };
 	if (s_szCachePath[0] == 0)
 	{
 		// Create cache directory in current working directory
@@ -5478,8 +5402,7 @@ bool CShaderManager::SaveShaderToCache(EShaderType type, UINT hash, ID3DBlob* pV
 	return true;
 }
 
-bool CShaderManager::CompileShader(EShaderType type, const char* szVSCode, const char* szPSCode,
-	const D3D11_INPUT_ELEMENT_DESC* pElements, UINT numElements)
+bool CShaderManager::CompileShader(EShaderType type, const char* szVSCode, const char* szPSCode)
 {
 	HRESULT hr;
 	ID3DBlob* pErrorBlob = nullptr;
@@ -5511,16 +5434,46 @@ bool CShaderManager::CompileShader(EShaderType type, const char* szVSCode, const
 			goto compile_from_source;
 		}
 
-		hr = m_pDevice->CreateInputLayout(pElements, numElements, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_Shaders[type].pInputLayout);
+		std::vector<D3D11_INPUT_ELEMENT_DESC> layout;
+		hr = CreateShaderReflection(pVSBlob, layout);
 		if (FAILED(hr))
 		{
-			m_Shaders[type].pVertexShader->Release();
-			m_Shaders[type].pVertexShader = nullptr;
-			m_Shaders[type].pPixelShader->Release();
-			m_Shaders[type].pPixelShader = nullptr;
+			if (m_Shaders[type].pVertexShader)
+			{
+				m_Shaders[type].pVertexShader->Release();
+				m_Shaders[type].pVertexShader = nullptr;
+			}
+
+			if (m_Shaders[type].pPixelShader)
+			{
+				m_Shaders[type].pPixelShader->Release();
+				m_Shaders[type].pPixelShader = nullptr;
+			}
+
 			pVSBlob->Release();
 			pPSBlob->Release();
-			goto compile_from_source;
+			return false;
+		}
+
+		hr = m_pDevice->CreateInputLayout(layout.data(), static_cast<UINT>(layout.size()), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_Shaders[type].pInputLayout);
+
+		if (FAILED(hr))
+		{
+			if (m_Shaders[type].pVertexShader)
+			{
+				m_Shaders[type].pVertexShader->Release();
+				m_Shaders[type].pVertexShader = nullptr;
+			}
+
+			if (m_Shaders[type].pPixelShader)
+			{
+				m_Shaders[type].pPixelShader->Release();
+				m_Shaders[type].pPixelShader = nullptr;
+			}
+
+			pVSBlob->Release();
+			pPSBlob->Release();
+			return false;
 		}
 
 		pPSBlob->Release();
@@ -5556,8 +5509,47 @@ compile_from_source:
 	hr = m_pDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &m_Shaders[type].pPixelShader);
 	if (FAILED(hr)) { pVSBlob->Release(); pPSBlob->Release(); return false; }
 
-	hr = m_pDevice->CreateInputLayout(pElements, numElements, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_Shaders[type].pInputLayout);
-	if (FAILED(hr)) { pVSBlob->Release(); pPSBlob->Release(); return false; }
+	std::vector<D3D11_INPUT_ELEMENT_DESC> layout;
+	hr = CreateShaderReflection(pVSBlob, layout);
+	if (FAILED(hr))
+	{
+		if (m_Shaders[type].pVertexShader)
+		{
+			m_Shaders[type].pVertexShader->Release();
+			m_Shaders[type].pVertexShader = nullptr;
+		}
+
+		if (m_Shaders[type].pPixelShader)
+		{
+			m_Shaders[type].pPixelShader->Release();
+			m_Shaders[type].pPixelShader = nullptr;
+		}
+
+		pVSBlob->Release();
+		pPSBlob->Release();
+		return false;
+	}
+
+	hr = m_pDevice->CreateInputLayout(layout.data(), static_cast<UINT>(layout.size()), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_Shaders[type].pInputLayout);
+
+	if (FAILED(hr))
+	{
+		if (m_Shaders[type].pVertexShader)
+		{
+			m_Shaders[type].pVertexShader->Release();
+			m_Shaders[type].pVertexShader = nullptr;
+		}
+
+		if (m_Shaders[type].pPixelShader)
+		{
+			m_Shaders[type].pPixelShader->Release();
+			m_Shaders[type].pPixelShader = nullptr;
+		}
+
+		pVSBlob->Release();
+		pPSBlob->Release();
+		return false;
+	}
 
 	// Save compiled bytecode to cache for next launch
 	SaveShaderToCache(type, shaderHash, pVSBlob, pPSBlob);
@@ -5576,7 +5568,7 @@ bool CShaderManager::CreateConstantBuffers()
 	HRESULT hr;
 
 	cbDesc.ByteWidth = sizeof(CBPerFrame);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBPerFrame);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBPerFrame.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create PerFrame buffer (size=%d, hr=0x%08X)", sizeof(CBPerFrame), hr);
@@ -5584,9 +5576,9 @@ bool CShaderManager::CreateConstantBuffers()
 	}
 
 	cbDesc.ByteWidth = m_bCBRingSupported
-	                 ? (CBRingAlign256(sizeof(CBPerObject)) * CB_RING_SLOTS_PEROBJECT)
-	                 : sizeof(CBPerObject);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBPerObject);
+		? (CBRingAlign256(sizeof(CBPerObject)) * CB_RING_SLOTS_PEROBJECT)
+		: sizeof(CBPerObject);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBPerObject.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create PerObject buffer (size=%d, hr=0x%08X)", sizeof(CBPerObject), hr);
@@ -5594,7 +5586,7 @@ bool CShaderManager::CreateConstantBuffers()
 	}
 
 	cbDesc.ByteWidth = sizeof(CBLighting);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBLighting);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBLighting.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create Lighting buffer (size=%d, hr=0x%08X)", sizeof(CBLighting), hr);
@@ -5602,7 +5594,7 @@ bool CShaderManager::CreateConstantBuffers()
 	}
 
 	cbDesc.ByteWidth = sizeof(CBSpeedTree);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBSpeedTree);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBSpeedTree.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create SpeedTree buffer (size=%d, hr=0x%08X)", sizeof(CBSpeedTree), hr);
@@ -5610,7 +5602,7 @@ bool CShaderManager::CreateConstantBuffers()
 	}
 
 	cbDesc.ByteWidth = sizeof(CBSkinning);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBSkinning);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBSkinning.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create Skinning buffer (size=%d, hr=0x%08X)", sizeof(CBSkinning), hr);
@@ -5636,7 +5628,7 @@ bool CShaderManager::CreateConstantBuffers()
 	}
 
 	cbDesc.ByteWidth = sizeof(CBGodRays);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBGodRays);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBGodRays.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create GodRays buffer (size=%d, hr=0x%08X)", sizeof(CBGodRays), hr);
@@ -5671,7 +5663,7 @@ bool CShaderManager::CreateConstantBuffers()
 		auto nextRand = [&seed]() -> float {
 			seed = seed * 1103515245u + 12345u;
 			return (float)(seed & 0x7FFFFFFFu) / (float)0x7FFFFFFFu;
-		};
+			};
 
 		for (int i = 0; i < SSAO_KERNEL_SIZE; ++i)
 		{
@@ -5696,7 +5688,7 @@ bool CShaderManager::CreateConstantBuffers()
 		auto noiseRand = [&noiseSeed]() -> BYTE {
 			noiseSeed = noiseSeed * 1103515245u + 12345u;
 			return (BYTE)((noiseSeed >> 16) & 0xFF);
-		};
+			};
 
 		BYTE noiseData[4 * 4 * 2]; // 4x4 texels, 2 bytes each (RG)
 		for (int i = 0; i < 4 * 4; ++i)
@@ -5738,13 +5730,13 @@ bool CShaderManager::CreateConstantBuffers()
 #endif
 
 	cbDesc.ByteWidth = sizeof(CBSkyGradient);
-	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_pCBSkyGradient);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, m_pCBSkyGradient.GetAddressOf());
 	if (FAILED(hr))
 	{
 		TraceError("CreateConstantBuffers: Failed to create SkyGradient buffer (size=%d, hr=0x%08X)", sizeof(CBSkyGradient), hr);
 		return false;
 	}
-	memset(&m_cbSkyGradient, 0, sizeof(m_cbSkyGradient));
+
 	m_bSkyGradientDirty = false;
 
 	// Initialize bone matrices to identity
@@ -5871,9 +5863,9 @@ void CShaderManager::BindShader(EShaderType type)
 	if ((type == SHADER_TERRAIN || type == SHADER_MESH || type == SHADER_MESH_2TEX || type == SHADER_MESH_SKINNED || type == SHADER_MESH_VTF || type == SHADER_MESH_2TEX_VTF) && m_pSamplerClamp)
 		GetActiveContext()->PSSetSamplers(1, 1, &m_pSamplerClamp);
 
-	ID3D11Buffer* pCBPerFrame  = m_pCBPerFrame;
-	ID3D11Buffer* pCBPerObject = m_pCBPerObject;
-	ID3D11Buffer* pCBLighting  = m_pCBLighting;
+	ID3D11Buffer* pCBPerFrame = m_pCBPerFrame.Get();
+	ID3D11Buffer* pCBPerObject = m_pCBPerObject.Get();
+	ID3D11Buffer* pCBLighting = m_pCBLighting.Get();
 
 	if (pCBPerFrame)
 	{
@@ -5883,9 +5875,9 @@ void CShaderManager::BindShader(EShaderType type)
 	if (pCBPerObject)
 	{
 		__BindCBRing(GetActiveContext(), m_pContext1,
-		             pCBPerObject,
-		             m_cbPerObjectBound,
-		             sizeof(CBPerObject), 1, 1, true);
+			pCBPerObject,
+			m_cbPerObjectBound,
+			sizeof(CBPerObject), 1, 1, true);
 	}
 	if (pCBLighting)
 	{
@@ -5895,7 +5887,7 @@ void CShaderManager::BindShader(EShaderType type)
 
 	if (type == SHADER_SPEEDTREE || type == SHADER_SPEEDTREE_LEAF || type == SHADER_SPEEDTREE_VTF)
 	{
-		ID3D11Buffer* pCBSpeedTree = m_pCBSpeedTree;
+		ID3D11Buffer* pCBSpeedTree = m_pCBSpeedTree.Get();
 		if (pCBSpeedTree)
 			GetActiveContext()->VSSetConstantBuffers(3, 1, &pCBSpeedTree);
 	}
@@ -5903,33 +5895,33 @@ void CShaderManager::BindShader(EShaderType type)
 	// Bind sky gradient constant buffer for sky shader
 	if (type == SHADER_SKY && m_pCBSkyGradient)
 	{
-		GetActiveContext()->VSSetConstantBuffers(2, 1, &m_pCBSkyGradient);
-		GetActiveContext()->PSSetConstantBuffers(2, 1, &m_pCBSkyGradient);
+		GetActiveContext()->VSSetConstantBuffers(2, 1, m_pCBSkyGradient.GetAddressOf());
+		GetActiveContext()->PSSetConstantBuffers(2, 1, m_pCBSkyGradient.GetAddressOf());
 	}
 
 	eCurrentShader = type;
 
-		D3D11_MAPPED_SUBRESOURCE mapped;
-		if (m_bLightingDirty && m_pCBLighting)
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	if (m_bLightingDirty && m_pCBLighting)
+	{
+		if (SUCCEEDED(GetActiveContext()->Map(m_pCBLighting.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 		{
-			if (SUCCEEDED(GetActiveContext()->Map(m_pCBLighting, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
-			{
-				memcpy(mapped.pData, &m_cbLighting, sizeof(m_cbLighting));
-				GetActiveContext()->Unmap(m_pCBLighting, 0);
-				m_bLightingDirty = false;
-			}
+			memcpy(mapped.pData, &m_cbLighting, sizeof(m_cbLighting));
+			GetActiveContext()->Unmap(m_pCBLighting.Get(), 0);
+			m_bLightingDirty = false;
 		}
+	}
 }
 
-void CShaderManager::BeginUI()        { BindShader(SHADER_UI); }
-void CShaderManager::BeginMesh()      { BindShader(SHADER_MESH); }
-void CShaderManager::BeginMesh2Tex()  { BindShader(SHADER_MESH_2TEX); }
-void CShaderManager::BeginTerrain()   { BindShader(SHADER_TERRAIN); }
+void CShaderManager::BeginUI() { BindShader(SHADER_UI); }
+void CShaderManager::BeginMesh() { BindShader(SHADER_MESH); }
+void CShaderManager::BeginMesh2Tex() { BindShader(SHADER_MESH_2TEX); }
+void CShaderManager::BeginTerrain() { BindShader(SHADER_TERRAIN); }
 void CShaderManager::BeginWater()
 {
 	BindShader(SHADER_WATER);
 }
-void CShaderManager::BeginSky()       { BindShader(SHADER_SKY); }
+void CShaderManager::BeginSky() { BindShader(SHADER_SKY); }
 
 void CShaderManager::SetSkyGradient(const float* pColors, int count, int upperSegments)
 {
@@ -5943,16 +5935,16 @@ void CShaderManager::SetSkyGradient(const float* pColors, int count, int upperSe
 }
 
 
-void CShaderManager::BeginParticle()  { BindShader(SHADER_PARTICLE); }
-void CShaderManager::BeginShadow()    { BindShader(SHADER_SHADOW); }
+void CShaderManager::BeginParticle() { BindShader(SHADER_PARTICLE); }
+void CShaderManager::BeginShadow() { BindShader(SHADER_SHADOW); }
 void CShaderManager::BeginShadowSkinned()
 {
 	BindShader(SHADER_SHADOW_SKINNED);
-	ID3D11Buffer* pSkinCB = m_pCBSkinning;
+	ID3D11Buffer* pSkinCB = m_pCBSkinning.Get();
 	if (pSkinCB)
 		__BindCBRing(GetActiveContext(), m_pContext1,
-		             pSkinCB, 0,
-		             sizeof(CBSkinning), 3, -1, false);
+			pSkinCB, 0,
+			sizeof(CBSkinning), 3, -1, false);
 }
 void CShaderManager::BeginSpeedTree() { BindShader(SHADER_SPEEDTREE); }
 void CShaderManager::BeginSpeedTreeLeaf() { BindShader(SHADER_SPEEDTREE_LEAF); }
@@ -5961,11 +5953,11 @@ void CShaderManager::BeginMeshNormal() { BindShader(SHADER_MESH_NORMAL); }
 void CShaderManager::BeginMeshSkinned()
 {
 	BindShader(SHADER_MESH_SKINNED);
-	ID3D11Buffer* pSkinCB = m_pCBSkinning;
+	ID3D11Buffer* pSkinCB = m_pCBSkinning.Get();
 	if (pSkinCB)
 		__BindCBRing(GetActiveContext(), m_pContext1,
-		             pSkinCB, 0,
-		             sizeof(CBSkinning), 3, -1, false);
+			pSkinCB, 0,
+			sizeof(CBSkinning), 3, -1, false);
 }
 
 void CShaderManager::BeginGodRays()
@@ -5973,7 +5965,7 @@ void CShaderManager::BeginGodRays()
 	BindShader(SHADER_GODRAYS);
 	// Bind the god rays constant buffer to slot 0
 	if (m_pCBGodRays)
-		GetActiveContext()->PSSetConstantBuffers(0, 1, &m_pCBGodRays);
+		GetActiveContext()->PSSetConstantBuffers(0, 1, m_pCBGodRays.GetAddressOf());
 }
 
 #ifdef ENABLE_BLOOM
@@ -6037,7 +6029,7 @@ void CShaderManager::End()
 		GetActiveContext()->VSSetShader(nullptr, nullptr, 0);
 		GetActiveContext()->PSSetShader(nullptr, nullptr, 0);
 	}
-		m_eCurrentShader = SHADER_NONE;
+	m_eCurrentShader = SHADER_NONE;
 }
 
 void CShaderManager::BindForInputLayout(EInputLayoutType type)
@@ -6159,7 +6151,7 @@ void CShaderManager::SetTime(float fTotalTime, float fDeltaTime)
 
 void CShaderManager::SetSunDirection(float x, float y, float z, float intensity)
 {
-	float len = sqrtf(x*x + y*y + z*z);
+	float len = sqrtf(x * x + y * y + z * z);
 	if (len > 0.0001f)
 	{
 		x /= len;
@@ -6274,46 +6266,46 @@ void CShaderManager::SetWorldMatrix(const Matrix* pWorld)
 {
 	XMMATRIX matWorld = XMLoadFloat4x4((XMFLOAT4X4*)pWorld);
 	XMMATRIX matWVP;
-		matWVP = matWorld * XMMatrixTranspose(m_cbPerFrame.matView) * XMMatrixTranspose(m_cbPerFrame.matProjection);
-		m_cbPerObject.matWorld = XMMatrixTranspose(matWorld);
-		m_cbPerObject.matWorldViewProj = XMMatrixTranspose(matWVP);
-		m_bPerObjectDirty = true;
+	matWVP = matWorld * XMMatrixTranspose(m_cbPerFrame.matView) * XMMatrixTranspose(m_cbPerFrame.matProjection);
+	m_cbPerObject.matWorld = XMMatrixTranspose(matWorld);
+	m_cbPerObject.matWorldViewProj = XMMatrixTranspose(matWVP);
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetDiffuseColor(float r, float g, float b, float a)
 {
-		XMFLOAT4& cur = m_cbPerObject.vDiffuseColor;
-		if (cur.x == r && cur.y == g && cur.z == b && cur.w == a)
-			return;
-		cur = XMFLOAT4(r, g, b, a);
-		m_bPerObjectDirty = true;
+	XMFLOAT4& cur = m_cbPerObject.vDiffuseColor;
+	if (cur.x == r && cur.y == g && cur.z == b && cur.w == a)
+		return;
+	cur = XMFLOAT4(r, g, b, a);
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetAlphaTest(bool bEnabled, float fRef)
 {
 	float fEnabledVal = bEnabled ? 1.0f : 0.0f;
-		if (m_cbPerObject.vMaterialParams.x == fRef &&
-			m_cbPerObject.vMaterialParams.y == fEnabledVal)
-			return;
-		m_cbPerObject.vMaterialParams.x = fRef;
-		m_cbPerObject.vMaterialParams.y = fEnabledVal;
-		m_bPerObjectDirty = true;
+	if (m_cbPerObject.vMaterialParams.x == fRef &&
+		m_cbPerObject.vMaterialParams.y == fEnabledVal)
+		return;
+	m_cbPerObject.vMaterialParams.x = fRef;
+	m_cbPerObject.vMaterialParams.y = fEnabledVal;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetMaterial(float fSpecularPower)
 {
-		if (m_cbPerObject.vMaterialParams.z == fSpecularPower)
-			return;
-		m_cbPerObject.vMaterialParams.z = fSpecularPower;
-		m_bPerObjectDirty = true;
+	if (m_cbPerObject.vMaterialParams.z == fSpecularPower)
+		return;
+	m_cbPerObject.vMaterialParams.z = fSpecularPower;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetTextureColorSwap(bool bEnabled)
 {
 	float v = bEnabled ? 1.0f : 0.0f;
-		if (m_cbPerObject.vMaterialParams.z == v) return;
-		m_cbPerObject.vMaterialParams.z = v;
-		m_bPerObjectDirty = true;
+	if (m_cbPerObject.vMaterialParams.z == v) return;
+	m_cbPerObject.vMaterialParams.z = v;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetSpecularTune(float fIntensity, float fPower)
@@ -6327,25 +6319,25 @@ void CShaderManager::SetSpecularTune(float fIntensity, float fPower)
 
 void CShaderManager::SetSpecularColor(float r, float g, float b)
 {
-		XMFLOAT4& cur = m_cbPerObject.vSpecularColor;
-		if (cur.x == r && cur.y == g && cur.z == b) return;
-		cur.x = r; cur.y = g; cur.z = b;
-		m_bPerObjectDirty = true;
+	XMFLOAT4& cur = m_cbPerObject.vSpecularColor;
+	if (cur.x == r && cur.y == g && cur.z == b) return;
+	cur.x = r; cur.y = g; cur.z = b;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetSpecularPower(float power)
 {
-		if (m_cbPerObject.vSpecularColor.w == power) return;
-		m_cbPerObject.vSpecularColor.w = power;
-		m_bPerObjectDirty = true;
+	if (m_cbPerObject.vSpecularColor.w == power) return;
+	m_cbPerObject.vSpecularColor.w = power;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetEmissiveColor(float r, float g, float b)
 {
-		XMFLOAT4& cur = m_cbPerObject.vEmissiveColor;
-		if (cur.x == r && cur.y == g && cur.z == b) return;
-		cur = XMFLOAT4(r, g, b, 0.0f);
-		m_bPerObjectDirty = true;
+	XMFLOAT4& cur = m_cbPerObject.vEmissiveColor;
+	if (cur.x == r && cur.y == g && cur.z == b) return;
+	cur = XMFLOAT4(r, g, b, 0.0f);
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetTwoTextureBlend(bool bEnabled)
@@ -6375,14 +6367,14 @@ void CShaderManager::SetParticleColorOp(BYTE byColorOp)
 
 void CShaderManager::SetMaterialParams(float x, float y, float z, float w)
 {
-		XMFLOAT4& cur = m_cbPerObject.vMaterialParams;
-		if (cur.x == x && cur.y == y && cur.z == z && cur.w == w)
-			return;
-		cur.x = x;
-		cur.y = y;
-		cur.z = z;
-		cur.w = w;
-		m_bPerObjectDirty = true;
+	XMFLOAT4& cur = m_cbPerObject.vMaterialParams;
+	if (cur.x == x && cur.y == y && cur.z == z && cur.w == w)
+		return;
+	cur.x = x;
+	cur.y = y;
+	cur.z = z;
+	cur.w = w;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetTextureMatrix(int slot, const Matrix* pMatrix)
@@ -6392,11 +6384,11 @@ void CShaderManager::SetTextureMatrix(int slot, const Matrix* pMatrix)
 	XMMATRIX mat = XMLoadFloat4x4((const XMFLOAT4X4*)pMatrix);
 	mat = XMMatrixTranspose(mat);
 
-		if (slot == 0)
-			m_cbPerObject.matTexture0 = mat;
-		else if (slot == 1)
-			m_cbPerObject.matTexture1 = mat;
-		m_bPerObjectDirty = true;
+	if (slot == 0)
+		m_cbPerObject.matTexture0 = mat;
+	else if (slot == 1)
+		m_cbPerObject.matTexture1 = mat;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetCharacterShadowPass(bool bEnabled)
@@ -6442,18 +6434,18 @@ void CShaderManager::SetSkyTint(DWORD dwColor)
 		(dwColor & 0xFF) / 255.0f,
 		((dwColor >> 24) & 0xFF) / 255.0f
 	);
-		m_dwSkyTint = dwColor;
-		XMFLOAT4& cur = m_cbPerObject.vSkyTint;
-		if (cur.x == vFactor.x && cur.y == vFactor.y && cur.z == vFactor.z && cur.w == vFactor.w)
-			return;
-		cur = vFactor;
-		m_bPerObjectDirty = true;
+	m_dwSkyTint = dwColor;
+	XMFLOAT4& cur = m_cbPerObject.vSkyTint;
+	if (cur.x == vFactor.x && cur.y == vFactor.y && cur.z == vFactor.z && cur.w == vFactor.w)
+		return;
+	cur = vFactor;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::__CommitCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceContext1* pCtx1,
-                                    ID3D11Buffer* pBuf, UINT& rOffset, UINT& rBound, UINT ringBytes,
-                                    const void* pSrc, UINT srcBytes, int vsSlot, int psSlot,
-                                    bool* pForceDiscard)
+	ID3D11Buffer* pBuf, UINT& rOffset, UINT& rBound, UINT ringBytes,
+	const void* pSrc, UINT srcBytes, int vsSlot, int psSlot,
+	bool* pForceDiscard)
 {
 	if (!pCtx || !pBuf || !pSrc) return;
 
@@ -6494,24 +6486,24 @@ void CShaderManager::__CommitCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceConte
 	pCtx->Unmap(pBuf, 0);
 
 	const UINT firstConstant = rOffset / 16u;
-	const UINT numConstants  = stride  / 16u;
+	const UINT numConstants = stride / 16u;
 	if (vsSlot >= 0) pCtx1->VSSetConstantBuffers1((UINT)vsSlot, 1, &pBuf, &firstConstant, &numConstants);
 	if (psSlot >= 0) pCtx1->PSSetConstantBuffers1((UINT)psSlot, 1, &pBuf, &firstConstant, &numConstants);
 
-	rBound   = rOffset;
+	rBound = rOffset;
 	rOffset += stride;
 }
 
 void CShaderManager::__BindCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceContext1* pCtx1,
-                                  ID3D11Buffer* pBuf, UINT boundOffset, UINT srcBytes,
-                                  int vsSlot, int psSlot, bool bRing)
+	ID3D11Buffer* pBuf, UINT boundOffset, UINT srcBytes,
+	int vsSlot, int psSlot, bool bRing)
 {
 	if (!pCtx || !pBuf) return;
 
 	if (bRing && m_bCBRingSupported && pCtx1)
 	{
 		const UINT firstConstant = boundOffset / 16u;
-		const UINT numConstants  = CBRingAlign256(srcBytes) / 16u;
+		const UINT numConstants = CBRingAlign256(srcBytes) / 16u;
 		if (vsSlot >= 0) pCtx1->VSSetConstantBuffers1((UINT)vsSlot, 1, &pBuf, &firstConstant, &numConstants);
 		if (psSlot >= 0) pCtx1->PSSetConstantBuffers1((UINT)psSlot, 1, &pBuf, &firstConstant, &numConstants);
 		return;
@@ -6532,12 +6524,12 @@ void CShaderManager::CommitChanges()
 	// ===== Main thread path: existing code =====
 	if (m_bPerFrameDirty && m_pCBPerFrame)
 	{
-		if (SUCCEEDED(GetActiveContext()->Map(m_pCBPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		if (SUCCEEDED(GetActiveContext()->Map(m_pCBPerFrame.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 		{
 			memcpy(mapped.pData, &m_cbPerFrame, sizeof(m_cbPerFrame));
-			GetActiveContext()->Unmap(m_pCBPerFrame, 0);
-			GetActiveContext()->VSSetConstantBuffers(0, 1, &m_pCBPerFrame);
-			GetActiveContext()->PSSetConstantBuffers(0, 1, &m_pCBPerFrame);
+			GetActiveContext()->Unmap(m_pCBPerFrame.Get(), 0);
+			GetActiveContext()->VSSetConstantBuffers(0, 1, m_pCBPerFrame.GetAddressOf());
+			GetActiveContext()->PSSetConstantBuffers(0, 1, m_pCBPerFrame.GetAddressOf());
 			m_bPerFrameDirty = false;
 		}
 		else
@@ -6548,21 +6540,21 @@ void CShaderManager::CommitChanges()
 
 	if (m_bPerObjectDirty && m_pCBPerObject)
 	{
-		__CommitCBRing(GetActiveContext(), m_pContext1, m_pCBPerObject,
-		               m_cbPerObjectOffset, m_cbPerObjectBound,
-		               CBRingAlign256(sizeof(CBPerObject)) * CB_RING_SLOTS_PEROBJECT,
-		               &m_cbPerObject, sizeof(m_cbPerObject), 1, 1);
+		__CommitCBRing(GetActiveContext(), m_pContext1, m_pCBPerObject.Get(),
+			m_cbPerObjectOffset, m_cbPerObjectBound,
+			CBRingAlign256(sizeof(CBPerObject)) * CB_RING_SLOTS_PEROBJECT,
+			&m_cbPerObject, sizeof(m_cbPerObject), 1, 1);
 		m_bPerObjectDirty = false;
 	}
 
 	if (m_bLightingDirty && m_pCBLighting)
 	{
-		if (SUCCEEDED(GetActiveContext()->Map(m_pCBLighting, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		if (SUCCEEDED(GetActiveContext()->Map(m_pCBLighting.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 		{
 			memcpy(mapped.pData, &m_cbLighting, sizeof(m_cbLighting));
-			GetActiveContext()->Unmap(m_pCBLighting, 0);
-			GetActiveContext()->VSSetConstantBuffers(2, 1, &m_pCBLighting);
-			GetActiveContext()->PSSetConstantBuffers(2, 1, &m_pCBLighting);
+			GetActiveContext()->Unmap(m_pCBLighting.Get(), 0);
+			GetActiveContext()->VSSetConstantBuffers(2, 1, m_pCBLighting.GetAddressOf());
+			GetActiveContext()->PSSetConstantBuffers(2, 1, m_pCBLighting.GetAddressOf());
 			m_bLightingDirty = false;
 		}
 		else
@@ -6573,11 +6565,11 @@ void CShaderManager::CommitChanges()
 
 	if (m_bSpeedTreeDirty && m_pCBSpeedTree && (m_eCurrentShader == SHADER_SPEEDTREE || m_eCurrentShader == SHADER_SPEEDTREE_LEAF))
 	{
-		if (SUCCEEDED(GetActiveContext()->Map(m_pCBSpeedTree, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		if (SUCCEEDED(GetActiveContext()->Map(m_pCBSpeedTree.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 		{
 			memcpy(mapped.pData, &m_cbSpeedTree, sizeof(m_cbSpeedTree));
-			GetActiveContext()->Unmap(m_pCBSpeedTree, 0);
-			GetActiveContext()->VSSetConstantBuffers(3, 1, &m_pCBSpeedTree);
+			GetActiveContext()->Unmap(m_pCBSpeedTree.Get(), 0);
+			GetActiveContext()->VSSetConstantBuffers(3, 1, m_pCBSpeedTree.GetAddressOf());
 			m_bSpeedTreeDirty = false;
 		}
 		else
@@ -6599,11 +6591,11 @@ void CShaderManager::CommitChanges()
 		}
 		else
 		{
-			if (SUCCEEDED(GetActiveContext()->Map(m_pCBSkinning, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+			if (SUCCEEDED(GetActiveContext()->Map(m_pCBSkinning.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 			{
 				memcpy(mapped.pData, &m_cbSkinning, sizeof(CBSkinning));
-				GetActiveContext()->Unmap(m_pCBSkinning, 0);
-				GetActiveContext()->VSSetConstantBuffers(3, 1, &m_pCBSkinning);
+				GetActiveContext()->Unmap(m_pCBSkinning.Get(), 0);
+				GetActiveContext()->VSSetConstantBuffers(3, 1, m_pCBSkinning.GetAddressOf());
 				m_bSkinningDirty = false;
 			}
 			else
@@ -6615,11 +6607,11 @@ void CShaderManager::CommitChanges()
 
 	if (m_bSkyGradientDirty && m_pCBSkyGradient && m_eCurrentShader == SHADER_SKY)
 	{
-		if (SUCCEEDED(GetActiveContext()->Map(m_pCBSkyGradient, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		if (SUCCEEDED(GetActiveContext()->Map(m_pCBSkyGradient.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 		{
 			memcpy(mapped.pData, &m_cbSkyGradient, sizeof(m_cbSkyGradient));
-			GetActiveContext()->Unmap(m_pCBSkyGradient, 0);
-			GetActiveContext()->PSSetConstantBuffers(2, 1, &m_pCBSkyGradient);
+			GetActiveContext()->Unmap(m_pCBSkyGradient.Get(), 0);
+			GetActiveContext()->PSSetConstantBuffers(2, 1, m_pCBSkyGradient.GetAddressOf());
 			m_bSkyGradientDirty = false;
 		}
 	}
@@ -6800,11 +6792,11 @@ void CShaderManager::SetPipelineState(EPipelineState state, DWORD value)
 
 	switch (state)
 	{
-	// Blend states
+		// Blend states
 	case PSTATE_BLENDENABLE:
-		{ bool v = (value != 0); if (rs.bAlphaBlendEnable == v) return; rs.bAlphaBlendEnable = v; }
-		bBlendDirty = true;
-		break;
+	{ bool v = (value != 0); if (rs.bAlphaBlendEnable == v) return; rs.bAlphaBlendEnable = v; }
+	bBlendDirty = true;
+	break;
 	case PSTATE_SRCBLEND:
 		if (rs.srcBlend == (D3D11_BLEND)value) return;
 		rs.srcBlend = (D3D11_BLEND)value;
@@ -6826,57 +6818,57 @@ void CShaderManager::SetPipelineState(EPipelineState state, DWORD value)
 		bBlendDirty = true;
 		break;
 
-	// Rasterizer states
+		// Rasterizer states
 	case PSTATE_FILLMODE:
 		rs.fillMode = (value == FILL_WIREFRAME) ? D3D11_FILL_WIREFRAME : D3D11_FILL_SOLID;
 		bRasterDirty = true;
 		break;
 	case PSTATE_CULLMODE:
+	{
+		D3D11_CULL_MODE newCull = rs.cullMode;
+		switch (value)
 		{
-			D3D11_CULL_MODE newCull = rs.cullMode;
-			switch (value)
-			{
-			case CULL_NONE: newCull = D3D11_CULL_NONE; break;
-			case CULL_FRONT:   newCull = D3D11_CULL_FRONT; break;
-			case CULL_BACK:  newCull = D3D11_CULL_BACK; break;
-			}
-			if (rs.cullMode == newCull) return;
-			rs.cullMode = newCull;
+		case CULL_NONE: newCull = D3D11_CULL_NONE; break;
+		case CULL_FRONT:   newCull = D3D11_CULL_FRONT; break;
+		case CULL_BACK:  newCull = D3D11_CULL_BACK; break;
 		}
-		bRasterDirty = true;
-		break;
+		if (rs.cullMode == newCull) return;
+		rs.cullMode = newCull;
+	}
+	bRasterDirty = true;
+	break;
 	case PSTATE_SCISSORENABLE:
-		{ bool v = (value != 0); if (rs.bScissorEnable == v) return; rs.bScissorEnable = v; }
-		bRasterDirty = true;
-		break;
+	{ bool v = (value != 0); if (rs.bScissorEnable == v) return; rs.bScissorEnable = v; }
+	bRasterDirty = true;
+	break;
 	case PSTATE_DEPTHBIAS:
 		if (rs.depthBias == (INT)value) return;
 		rs.depthBias = (INT)value;
 		bRasterDirty = true;
 		break;
 	case PSTATE_SLOPESCALEDDEPTHBIAS:
-		{ float v = *(float*)&value; if (rs.slopeScaledDepthBias == v) return; rs.slopeScaledDepthBias = v; }
-		bRasterDirty = true;
-		break;
+	{ float v = *(float*)&value; if (rs.slopeScaledDepthBias == v) return; rs.slopeScaledDepthBias = v; }
+	bRasterDirty = true;
+	break;
 
 	// Depth stencil states
 	case PSTATE_DEPTHENABLE:
-		{ bool v = (value != 0); if (rs.bDepthEnable == v) return; rs.bDepthEnable = v; }
-		bDepthDirty = true;
-		break;
+	{ bool v = (value != 0); if (rs.bDepthEnable == v) return; rs.bDepthEnable = v; }
+	bDepthDirty = true;
+	break;
 	case PSTATE_DEPTHWRITEMASK:
-		{ bool v = (value != 0); if (rs.bDepthWriteEnable == v) return; rs.bDepthWriteEnable = v; }
-		bDepthDirty = true;
-		break;
+	{ bool v = (value != 0); if (rs.bDepthWriteEnable == v) return; rs.bDepthWriteEnable = v; }
+	bDepthDirty = true;
+	break;
 	case PSTATE_DEPTHFUNC:
 		if (rs.depthFunc == (D3D11_COMPARISON_FUNC)value) return;
 		rs.depthFunc = (D3D11_COMPARISON_FUNC)value;
 		bDepthDirty = true;
 		break;
 	case PSTATE_STENCILENABLE:
-		{ bool v = (value != 0); if (rs.bStencilEnable == v) return; rs.bStencilEnable = v; }
-		bDepthDirty = true;
-		break;
+	{ bool v = (value != 0); if (rs.bStencilEnable == v) return; rs.bStencilEnable = v; }
+	bDepthDirty = true;
+	break;
 	case PSTATE_STENCILREADMASK:
 		if (rs.stencilReadMask == (UINT8)value) return;
 		rs.stencilReadMask = (UINT8)value;
@@ -7044,13 +7036,13 @@ void CShaderManager::SetVertexBuffer(UINT stream, ID3D11Buffer* pBuffer, UINT st
 	if (stream >= MAX_STREAMS) return;
 	if (!GetActiveContext()) return;
 
-		if (m_Streams[stream].pBuffer == pBuffer &&
-			m_Streams[stream].stride == stride &&
-			m_Streams[stream].offset == offset)
-			return;
-		m_Streams[stream].pBuffer = pBuffer;
-		m_Streams[stream].stride = stride;
-		m_Streams[stream].offset = offset;
+	if (m_Streams[stream].pBuffer == pBuffer &&
+		m_Streams[stream].stride == stride &&
+		m_Streams[stream].offset == offset)
+		return;
+	m_Streams[stream].pBuffer = pBuffer;
+	m_Streams[stream].stride = stride;
+	m_Streams[stream].offset = offset;
 
 	GetActiveContext()->IASetVertexBuffers(stream, 1, &pBuffer, &stride, &offset);
 }
@@ -7059,13 +7051,13 @@ void CShaderManager::SetIndexBuffer(ID3D11Buffer* pBuffer, DXGI_FORMAT format, U
 {
 	if (!GetActiveContext()) return;
 
-		if (m_pCurrentIndexBuffer == pBuffer &&
-			m_IndexFormat == format &&
-			m_IndexOffset == offset)
-			return;
-		m_pCurrentIndexBuffer = pBuffer;
-		m_IndexFormat = format;
-		m_IndexOffset = offset;
+	if (m_pCurrentIndexBuffer == pBuffer &&
+		m_IndexFormat == format &&
+		m_IndexOffset == offset)
+		return;
+	m_pCurrentIndexBuffer = pBuffer;
+	m_IndexFormat = format;
+	m_IndexOffset = offset;
 
 	GetActiveContext()->IASetIndexBuffer(pBuffer, format, offset);
 }
@@ -7075,24 +7067,24 @@ void CShaderManager::SetPrimitiveTopologyIfChanged(D3D11_PRIMITIVE_TOPOLOGY topo
 	if (!GetActiveContext()) return;
 	if (topology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED) return;
 
-		if (m_CurrentTopology == topology) return;
-		m_CurrentTopology = topology;
+	if (m_CurrentTopology == topology) return;
+	m_CurrentTopology = topology;
 
 	GetActiveContext()->IASetPrimitiveTopology(topology);
 }
 
 void CShaderManager::InvalidateIACache()
 {
-		for (DWORD i = 0; i < MAX_STREAMS; ++i)
-		{
-			m_Streams[i].pBuffer = nullptr;
-			m_Streams[i].stride = 0;
-			m_Streams[i].offset = 0;
-		}
-		m_pCurrentIndexBuffer = nullptr;
-		m_IndexFormat = DXGI_FORMAT_UNKNOWN;
-		m_IndexOffset = 0;
-		m_CurrentTopology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+	for (DWORD i = 0; i < MAX_STREAMS; ++i)
+	{
+		m_Streams[i].pBuffer = nullptr;
+		m_Streams[i].stride = 0;
+		m_Streams[i].offset = 0;
+	}
+	m_pCurrentIndexBuffer = nullptr;
+	m_IndexFormat = DXGI_FORMAT_UNKNOWN;
+	m_IndexOffset = 0;
+	m_CurrentTopology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
 static D3D11_PRIMITIVE_TOPOLOGY GetD3D11Topology(EPrimitiveTopology type)
@@ -7298,9 +7290,9 @@ void CShaderManager::DrawDynamic(EPrimitiveTopology type, UINT primitiveCount, c
 	if (dataSize > DYNAMIC_VB_SIZE) return;
 
 	// Select per-thread or shared dynamic buffer
-	ID3D11Buffer*& pDynVB   = m_pDynamicVertexBuffer;
-	DWORD&         dwVBOff  = m_dwDynamicVBOffset;
-	bool&          bDiscard = m_bDynamicBufferNeedsDiscard;
+	ID3D11Buffer*& pDynVB = m_pDynamicVertexBuffer;
+	DWORD& dwVBOff = m_dwDynamicVBOffset;
+	bool& bDiscard = m_bDynamicBufferNeedsDiscard;
 
 	if (!pDynVB) return;
 
@@ -7349,9 +7341,9 @@ bool CShaderManager::MapDynamicVB(UINT requiredBytes, MappedDynamicVB& outMapped
 {
 	if (!GetActiveContext()) return false;
 
-	ID3D11Buffer*& pDynVB   = m_pDynamicVertexBuffer;
-	DWORD&         dwVBOff  = m_dwDynamicVBOffset;
-	bool&          bDiscard = m_bDynamicBufferNeedsDiscard;
+	ID3D11Buffer*& pDynVB = m_pDynamicVertexBuffer;
+	DWORD& dwVBOff = m_dwDynamicVBOffset;
+	bool& bDiscard = m_bDynamicBufferNeedsDiscard;
 
 	if (!pDynVB || requiredBytes > DYNAMIC_VB_SIZE) return false;
 
@@ -7427,11 +7419,11 @@ void CShaderManager::DrawIndexedDynamic(EPrimitiveTopology type, UINT minIndex, 
 	if (indexDataSize > DYNAMIC_IB_SIZE || vertexDataSize > DYNAMIC_VB_SIZE) return;
 
 	// Select per-thread or shared dynamic buffers
-	ID3D11Buffer*& pDynVB   = m_pDynamicVertexBuffer;
-	ID3D11Buffer*& pDynIB   = m_pDynamicIndexBuffer;
-	DWORD&         dwVBOff  = m_dwDynamicVBOffset;
-	DWORD&         dwIBOff  = m_dwDynamicIBOffset;
-	bool&          bDiscard = m_bDynamicBufferNeedsDiscard;
+	ID3D11Buffer*& pDynVB = m_pDynamicVertexBuffer;
+	ID3D11Buffer*& pDynIB = m_pDynamicIndexBuffer;
+	DWORD& dwVBOff = m_dwDynamicVBOffset;
+	DWORD& dwIBOff = m_dwDynamicIBOffset;
+	bool& bDiscard = m_bDynamicBufferNeedsDiscard;
 
 	if (!pDynVB || !pDynIB) return;
 
@@ -7508,7 +7500,7 @@ void CShaderManager::SetMatrix(EMatrixSlot state, const Matrix* pMatrix)
 	}
 	else if (state == MATRIX_VIEW || state == MATRIX_PROJECTION)
 	{
-			SetViewProjection(&m_Matrices[MATRIX_VIEW], &m_Matrices[MATRIX_PROJECTION]);
+		SetViewProjection(&m_Matrices[MATRIX_VIEW], &m_Matrices[MATRIX_PROJECTION]);
 	}
 	else if (state == MATRIX_TEXTURE0)
 	{
@@ -7555,7 +7547,7 @@ void CShaderManager::RestoreTransform(EMatrixSlot state)
 
 void CShaderManager::SetInputLayout(EInputLayoutType type)
 {
-		m_CurrentInputLayout = type;
+	m_CurrentInputLayout = type;
 	BindForInputLayout(type);
 }
 
@@ -7567,13 +7559,13 @@ void CShaderManager::SetInputLayout(ID3D11InputLayout* pLayout)
 
 void CShaderManager::SaveInputLayout(EInputLayoutType type)
 {
-		m_SavedInputLayout = m_CurrentInputLayout;
+	m_SavedInputLayout = m_CurrentInputLayout;
 	SetInputLayout(type);
 }
 
 void CShaderManager::RestoreInputLayout()
 {
-		SetInputLayout(m_SavedInputLayout);
+	SetInputLayout(m_SavedInputLayout);
 }
 
 //--------------------------------------------------------------------
@@ -7734,16 +7726,16 @@ void CShaderManager::SetBestFiltering(UINT slot)
 
 void CShaderManager::SetAlphaTestEnabled(bool bEnabled)
 {
-		m_bAlphaTestEnabled = bEnabled;
-		m_cbPerObject.vMaterialParams.y = bEnabled ? 1.0f : 0.0f;
-		m_bPerObjectDirty = true;
+	m_bAlphaTestEnabled = bEnabled;
+	m_cbPerObject.vMaterialParams.y = bEnabled ? 1.0f : 0.0f;
+	m_bPerObjectDirty = true;
 }
 
 void CShaderManager::SetAlphaTestRefByte(DWORD dwRef)
 {
-		m_dwAlphaTestRef = dwRef;
-		m_cbPerObject.vMaterialParams.x = (float)dwRef / 255.0f;
-		m_bPerObjectDirty = true;
+	m_dwAlphaTestRef = dwRef;
+	m_cbPerObject.vMaterialParams.x = (float)dwRef / 255.0f;
+	m_bPerObjectDirty = true;
 }
 
 //--------------------------------------------------------------------
@@ -7754,7 +7746,7 @@ void CShaderManager::SetMaterial(const TMaterial* pMaterial)
 {
 	if (!pMaterial) return;
 
-		m_CurrentMaterial = *pMaterial;
+	m_CurrentMaterial = *pMaterial;
 
 	SetDiffuseColor(pMaterial->Diffuse.r, pMaterial->Diffuse.g, pMaterial->Diffuse.b, pMaterial->Diffuse.a);
 	SetSpecularColor(pMaterial->Specular.r, pMaterial->Specular.g, pMaterial->Specular.b);
@@ -7770,12 +7762,12 @@ void CShaderManager::GetMaterial(TMaterial* pMaterial) const
 
 void CShaderManager::SaveMaterial()
 {
-		m_SavedMaterial = m_CurrentMaterial;
+	m_SavedMaterial = m_CurrentMaterial;
 }
 
 void CShaderManager::RestoreMaterial()
 {
-		SetMaterial(&m_SavedMaterial);
+	SetMaterial(&m_SavedMaterial);
 }
 
 //--------------------------------------------------------------------
@@ -7816,14 +7808,14 @@ void CShaderManager::SetBoneMatrices(const Matrix* pMatrices, int count)
 
 	const size_t bytes = (size_t)count * sizeof(XMMATRIX);
 
-		memcpy(m_cbSkinning.boneMatrices, pMatrices, bytes);
-		static thread_local int s_lastBoneCount = 0;
-		const int fillEnd = (s_lastBoneCount > count) ? s_lastBoneCount : count;
-		for (int i = count; i < fillEnd; ++i)
-			m_cbSkinning.boneMatrices[i] = XMMatrixIdentity();
-		s_lastBoneCount = count;
-		m_iActiveBoneCount = count;
-		m_bSkinningDirty = true;
+	memcpy(m_cbSkinning.boneMatrices, pMatrices, bytes);
+	static thread_local int s_lastBoneCount = 0;
+	const int fillEnd = (s_lastBoneCount > count) ? s_lastBoneCount : count;
+	for (int i = count; i < fillEnd; ++i)
+		m_cbSkinning.boneMatrices[i] = XMMatrixIdentity();
+	s_lastBoneCount = count;
+	m_iActiveBoneCount = count;
+	m_bSkinningDirty = true;
 }
 
 //--------------------------------------------------------------------
@@ -7998,9 +7990,9 @@ void CShaderManager::SetSpeedTreeWindMatrix(int nIndex, const float* p)
 		return;
 
 	m_cbSpeedTree.matWindMatrices[nIndex] = XMMATRIX(
-		p[0],  p[1],  p[2],  p[3],
-		p[4],  p[5],  p[6],  p[7],
-		p[8],  p[9],  p[10], p[11],
+		p[0], p[1], p[2], p[3],
+		p[4], p[5], p[6], p[7],
+		p[8], p[9], p[10], p[11],
 		p[12], p[13], p[14], p[15]);
 	m_bSpeedTreeDirty = true;
 }
@@ -8036,8 +8028,8 @@ void CShaderManager::SetSpeedTreeLeafLightingAdjustment(const float* p)
 void CShaderManager::SetSpeedTreeLight(const float* p)
 {
 	if (!p) return;
-	m_cbSpeedTree.vLightDir     = XMFLOAT4(p[0], p[1], p[2],  p[3]);
-	m_cbSpeedTree.vLightDiffuse = XMFLOAT4(p[4], p[5], p[6],  p[7]);
+	m_cbSpeedTree.vLightDir = XMFLOAT4(p[0], p[1], p[2], p[3]);
+	m_cbSpeedTree.vLightDiffuse = XMFLOAT4(p[4], p[5], p[6], p[7]);
 	m_cbSpeedTree.vLightAmbient = XMFLOAT4(p[8], p[9], p[10], p[11]);
 	m_bSpeedTreeDirty = true;
 }
@@ -8061,9 +8053,9 @@ void CShaderManager::SetSpeedTreeCompoundMatrix(const float* p)
 {
 	if (!p) return;
 	m_cbPerObject.matWorldViewProj = XMMATRIX(
-		p[0],  p[1],  p[2],  p[3],
-		p[4],  p[5],  p[6],  p[7],
-		p[8],  p[9],  p[10], p[11],
+		p[0], p[1], p[2], p[3],
+		p[4], p[5], p[6], p[7],
+		p[8], p[9], p[10], p[11],
 		p[12], p[13], p[14], p[15]);
 	m_bPerObjectDirty = true;
 }
@@ -8136,10 +8128,10 @@ void CShaderManager::RenderGodRaysPass(
 	if (m_bGodRaysDirty && m_pCBGodRays)
 	{
 		D3D11_MAPPED_SUBRESOURCE mapped;
-		if (SUCCEEDED(m_pContext->Map(m_pCBGodRays, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
+		if (SUCCEEDED(m_pContext->Map(m_pCBGodRays.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)))
 		{
 			memcpy(mapped.pData, &m_cbGodRays, sizeof(m_cbGodRays));
-			m_pContext->Unmap(m_pCBGodRays, 0);
+			m_pContext->Unmap(m_pCBGodRays.Get(), 0);
 			m_bGodRaysDirty = false;
 		}
 	}
