@@ -437,6 +437,7 @@
     <ClCompile Include="MatrixStack.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="ShaderInit.cpp" />
+    <ClCompile Include="VolumetricFog.cpp" />
     <ClCompile Include="VTFInstanceManager.cpp" />
     <ClCompile Include="StateManager.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
@@ -547,6 +548,7 @@
     <ClInclude Include="TextFileLoader.h" />
     <ClInclude Include="ShaderInit.h" />
     <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="VolumetricFog.h" />
     <ClInclude Include="VTFInstanceManager.h" />
     <ClInclude Include="MatrixStack.h" />
     <ClInclude Include="GrpMathType.h" />

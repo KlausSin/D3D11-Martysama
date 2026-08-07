@@ -4,6 +4,7 @@
 #include "../eterLib/ShaderInit.h"
 
 #include "MapManager.h"
+#include "../eterLib/VolumetricFog.h"
 #include "MapOutdoor.h"
 
 #include "PropertyLoader.h"

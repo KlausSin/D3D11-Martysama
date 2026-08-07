@@ -92,7 +92,7 @@ public:
 
 private:
 	void __RenderTextElement(ImDrawList* pDrawList, const STextElement& elem);
-	void __RenderItemBox(ImDrawList* pDrawList, const STextElement& elem);
+	void __RenderItemBox(ImDrawList* pDrawList, float x1, float y1, float x2, float y2);
 
 	static constexpr unsigned int __ConvertARGBtoABGR(DWORD argb) noexcept
 	{

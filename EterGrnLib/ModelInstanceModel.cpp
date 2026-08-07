@@ -1,9 +1,16 @@
 #include "StdAfx.h"
 #include "ModelInstance.h"
 #include "Model.h"
+#include "../EterLib/VTFInstanceManager.h"
 
 void CGrannyModelInstance::Clear()
 {
+	// This instance may still be sitting in the VTF deferred-rigid/shadow batches as a raw pointer.
+	// Those are only cleared inside CPythonCharacterManager::Render(), so anything torn down on a
+	// different screen would otherwise be drawn again at its last transform — and because these
+	// instances come from a CDynamicPool, the recycled address can later belong to a live instance.
+	VTFMANAGER.InvalidateModelInstance(this);
+
 	m_kMtrlPal.Clear();
 
 	DestroyDeviceObjects();

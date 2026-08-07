@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <algorithm>
 #include "VTFInstanceManager.h"
 #include "ShaderManager.h"
 #include "ShaderInit.h"
@@ -207,6 +208,46 @@ void CVTFInstanceManager::ClearDeferredRigidBatches()
 {
 	m_deferredRigidBatches.clear();
 	m_frameStats = {};  // reset per-frame stats
+}
+
+size_t CVTFInstanceManager::GetDeferredRigidCount() const
+{
+	size_t n = 0;
+	for (const auto& kv : m_deferredRigidBatches)
+		n += kv.second.size();
+	return n;
+}
+
+size_t CVTFInstanceManager::GetDeferredShadowCount() const
+{
+	size_t n = 0;
+	for (const auto& kv : m_deferredShadowBatches)
+		n += kv.second.size();
+	return n;
+}
+
+void CVTFInstanceManager::InvalidateModelInstance(const CGrannyModelInstance* pModelInst)
+{
+	if (!pModelInst)
+		return;
+
+	// Both maps hold raw instance pointers, so a dying instance has to erase itself from them.
+	// Erase-remove per bucket, then drop buckets that are left empty so the maps cannot grow
+	// unbounded across screen changes.
+	auto purge = [pModelInst](auto& batches)
+	{
+		for (auto it = batches.begin(); it != batches.end(); )
+		{
+			auto& vec = it->second;
+			vec.erase(std::remove_if(vec.begin(), vec.end(),
+			                         [pModelInst](const SDeferredRigidInstance& e)
+			                         { return e.pModelInst == pModelInst; }),
+			          vec.end());
+			it = vec.empty() ? batches.erase(it) : std::next(it);
+		}
+	};
+	purge(m_deferredRigidBatches);
+	purge(m_deferredShadowBatches);
 }
 
 bool CVTFInstanceManager::DeferRigidModelInstance(CGrannyModel* pModel, CGrannyModelInstance* pModelInst)

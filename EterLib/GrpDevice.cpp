@@ -4,6 +4,7 @@
 #include "ShaderManager.h"
 #include "StateManager.h"
 #include "VTFInstanceManager.h"
+#include "VolumetricFog.h"
 #include "../eterBase/Stl.h"
 #include "../eterBase/Debug.h"
 
@@ -22,6 +23,7 @@ RECT g_rcBrowser;
 static CShaderManager gs_kShaderManager;
 
 static CVTFInstanceManager gs_kVTFInstanceManager;
+static CVolumetricFog gs_kVolumetricFog;
 
 static CStateManager* gs_pStateManager = nullptr;
 

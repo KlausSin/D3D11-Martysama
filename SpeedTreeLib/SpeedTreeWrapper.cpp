@@ -95,6 +95,9 @@ void CSpeedTreeWrapper::MakeSpeedTree()
 {
 	assert(m_pSpeedTree == nullptr);
 
+	if (m_pSpeedTree)
+		return;
+
 	m_pSpeedTree = new CSpeedTreeRT;
 	Initialize();
 }
@@ -311,30 +314,20 @@ CSpeedTreeWrapper::~CSpeedTreeWrapper()
 	// if this is not an instance, clean up
 	if (!m_bIsInstance)
 	{
-		if (m_unBranchVertexCount > 0)
-		{
-			SAFE_RELEASE(m_pBranchVertexBuffer);
-			SAFE_RELEASE(m_pBranchIndexBuffer);
-			SAFE_DELETE_ARRAY(m_pBranchIndexCounts);
-		}
+		SAFE_RELEASE(m_pBranchVertexBuffer);
+		SAFE_RELEASE(m_pBranchIndexBuffer);
+		SAFE_DELETE_ARRAY(m_pBranchIndexCounts);
 
-		if (m_unFrondVertexCount > 0)
-		{
-			SAFE_RELEASE(m_pFrondVertexBuffer);
-			SAFE_RELEASE(m_pFrondIndexBuffer);
-			SAFE_DELETE_ARRAY(m_pFrondIndexCounts);
-		}
+		SAFE_RELEASE(m_pFrondVertexBuffer);
+		SAFE_RELEASE(m_pFrondIndexBuffer);
+		SAFE_DELETE_ARRAY(m_pFrondIndexCounts);
 
 		for (short i = 0; i < m_usNumLeafLods; ++i)
 		{
-			m_pSpeedTree->GetGeometry(*m_pGeometryCache, SpeedTree_LeafGeometry, -1, -1, i);
-
-			if (m_pGeometryCache->m_sLeaves0.m_usLeafCount > 0)
-			{
+			if (m_pLeafVertexBuffer)
 				SAFE_RELEASE(m_pLeafVertexBuffer[i]);
-				if (m_pLeafShadowVertexBuffer)
-					SAFE_RELEASE(m_pLeafShadowVertexBuffer[i]);
-			}
+			if (m_pLeafShadowVertexBuffer)
+				SAFE_RELEASE(m_pLeafShadowVertexBuffer[i]);
 		}
 
 		SAFE_DELETE_ARRAY(m_pLeavesUpdatedByCpu);
@@ -1109,38 +1102,28 @@ void CSpeedTreeWrapper::RenderLeaves(bool bShadowPass) const
 			if (pLeaf->m_usLeafCount * 6 >= VERTEX_NUM)
 				continue;
 
-			// Compute corner positions from center + leaf map offsets
-			Vector3 akPosition[VERTEX_NUM];
-			Vector3* pkPosition = akPosition;
-			const float* center = pLeaf->m_pCenterCoords;
-			for (UINT unLeaf = 0; unLeaf < pLeaf->m_usLeafCount; ++unLeaf)
-			{
-				pkPosition[0].x = pLeaf->m_pLeafMapCoords[unLeaf][0] + center[0];
-				pkPosition[0].y = pLeaf->m_pLeafMapCoords[unLeaf][1] + center[1];
-				pkPosition[0].z = pLeaf->m_pLeafMapCoords[unLeaf][2] + center[2];
-				pkPosition[1].x = pLeaf->m_pLeafMapCoords[unLeaf][4] + center[0];
-				pkPosition[1].y = pLeaf->m_pLeafMapCoords[unLeaf][5] + center[1];
-				pkPosition[1].z = pLeaf->m_pLeafMapCoords[unLeaf][6] + center[2];
-				pkPosition[2].x = pLeaf->m_pLeafMapCoords[unLeaf][8] + center[0];
-				pkPosition[2].y = pLeaf->m_pLeafMapCoords[unLeaf][9] + center[1];
-				pkPosition[2].z = pLeaf->m_pLeafMapCoords[unLeaf][10] + center[2];
-				pkPosition[3] = pkPosition[0];
-				pkPosition[4] = pkPosition[2];
-				pkPosition[5].x = pLeaf->m_pLeafMapCoords[unLeaf][12] + center[0];
-				pkPosition[5].y = pLeaf->m_pLeafMapCoords[unLeaf][13] + center[1];
-				pkPosition[5].z = pLeaf->m_pLeafMapCoords[unLeaf][14] + center[2];
-				pkPosition += 6;
-				center += 3;
-			}
-
-			// Update vertex buffer positions
 			D3D11_MAPPED_SUBRESOURCE mappedResource;
 			if (SUCCEEDED(ms_pContext->Map(m_pLeafVertexBuffer[unLod], 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedResource)))
 			{
 				SLeafVertex* pVertex = (SLeafVertex*)mappedResource.pData;
-				UINT uVtxCount = pLeaf->m_usLeafCount * 6;
-				for (UINT uIdx = 0; uIdx < uVtxCount; ++uIdx)
-					pVertex[uIdx].m_vPosition = akPosition[uIdx];
+				const float* center = pLeaf->m_pCenterCoords;
+				for (UINT unLeaf = 0; unLeaf < pLeaf->m_usLeafCount; ++unLeaf)
+				{
+					const float* c = pLeaf->m_pLeafMapCoords[unLeaf];
+					SLeafVertex* v = pVertex + unLeaf * 6;
+
+					const Vector3 v0(c[0] + center[0], c[1] + center[1], c[2] + center[2]);
+					const Vector3 v2(c[8] + center[0], c[9] + center[1], c[10] + center[2]);
+
+					v[0].m_vPosition = v0;
+					v[1].m_vPosition = Vector3(c[4] + center[0], c[5] + center[1], c[6] + center[2]);
+					v[2].m_vPosition = v2;
+					v[3].m_vPosition = v0;
+					v[4].m_vPosition = v2;
+					v[5].m_vPosition = Vector3(c[12] + center[0], c[13] + center[1], c[14] + center[2]);
+
+					center += 3;
+				}
 
 				ms_pContext->Unmap(m_pLeafVertexBuffer[unLod], 0);
 			}

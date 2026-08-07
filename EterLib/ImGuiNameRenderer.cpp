@@ -225,6 +225,15 @@ void CImGuiNameRenderer::__RenderTextElement(ImDrawList* pDrawList, const STextE
 	drawX = floorf(drawX);
 	drawY = floorf(drawY);
 
+	if (elem.hasBox)
+	{
+		const float boxPadX = 3.0f;
+		const float boxPadY = 1.0f;
+		__RenderItemBox(pDrawList,
+			drawX - boxPadX, drawY - boxPadY,
+			drawX + textSize.x + boxPadX, drawY + textSize.y + boxPadY);
+	}
+
 	const char* textStart = elem.text.c_str();
 	const char* textEnd = textStart + elem.text.size();
 
@@ -257,23 +266,12 @@ void CImGuiNameRenderer::__RenderTextElement(ImDrawList* pDrawList, const STextE
 		ImVec2(drawX, drawY),
 		elem.color,
 		textStart, textEnd);
-
-	// Render item box if needed
-	if (elem.hasBox)
-	{
-		__RenderItemBox(pDrawList, elem);
-	}
 }
 
-void CImGuiNameRenderer::__RenderItemBox(ImDrawList* pDrawList, const STextElement& elem)
+void CImGuiNameRenderer::__RenderItemBox(ImDrawList* pDrawList, float x1, float y1, float x2, float y2)
 {
 	ImU32 boxBgColor = IM_COL32(0, 0, 0, 77);
 	ImU32 boxBorderColor = IM_COL32(0, 0, 0, 255);
-
-	float x1 = elem.x + elem.xStart;
-	float y1 = elem.y + elem.yStart;
-	float x2 = elem.x + elem.xEnd;
-	float y2 = elem.y + elem.yEnd;
 
 	pDrawList->AddRectFilled(ImVec2(x1, y1), ImVec2(x2, y2), boxBgColor);
 	pDrawList->AddRect(ImVec2(x1, y1), ImVec2(x2, y2), boxBorderColor);

@@ -973,7 +973,46 @@ void CPythonCharacterManager::Render()
 	}
 
 	__RenderSortedAliveActorList();
+	const size_t nDeferAfterAlive = VTFMANAGER.GetDeferredRigidCount();
 	__RenderSortedDeadActorList();
+
+	{
+		static int  s_probeTick = 0;
+		static bool s_probeOn   = false;
+		if ((s_probeTick % 60) == 0)
+		{
+			s_probeOn = false;
+			if (FILE* fp = fopen("chrprobe.txt", "r")) { s_probeOn = true; fclose(fp); }
+		}
+		if (s_probeOn && (s_probeTick % 60) == 0)
+		{
+			TraceError("[CHRPROBE] alive=%u dead=%u deferAfterAlive=%u deferAfterDead=%u deferShadow=%u",
+			           (unsigned)m_kAliveInstMap.size(), (unsigned)m_kDeadInstList.size(),
+			           (unsigned)nDeferAfterAlive,
+			           (unsigned)VTFMANAGER.GetDeferredRigidCount(),
+			           (unsigned)VTFMANAGER.GetDeferredShadowCount());
+
+			for (TCharacterInstanceMap::iterator it = m_kAliveInstMap.begin(); it != m_kAliveInstMap.end(); ++it)
+			{
+				CInstanceBase* p = it->second;
+				if (!p) continue;
+				const Vector3& v = p->GetGraphicThingInstanceRef().GetPosition();
+				TraceError("[CHRPROBE]   ALIVE vid=%u race=%u hair=%u pos=%.1f,%.1f,%.1f",
+				           (unsigned)p->GetVirtualID(), (unsigned)p->GetRace(),
+				           (unsigned)p->GetPart(CRaceData::PART_HAIR), v.x, v.y, v.z);
+			}
+			for (TCharacterInstanceList::iterator it = m_kDeadInstList.begin(); it != m_kDeadInstList.end(); ++it)
+			{
+				CInstanceBase* p = *it;
+				if (!p) continue;
+				const Vector3& v = p->GetGraphicThingInstanceRef().GetPosition();
+				TraceError("[CHRPROBE]   DEAD  vid=%u race=%u hair=%u pos=%.1f,%.1f,%.1f",
+				           (unsigned)p->GetVirtualID(), (unsigned)p->GetRace(),
+				           (unsigned)p->GetPart(CRaceData::PART_HAIR), v.x, v.y, v.z);
+			}
+		}
+		++s_probeTick;
+	}
 
 
 	CInstanceBase * pkPickedInst = OLD_GetPickedInstancePtr();

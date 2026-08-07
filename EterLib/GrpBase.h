@@ -506,6 +506,13 @@ class CGraphicBase
 		}
 #endif // ENABLE_SSAO
 
+	public:
+		// Mid-frame consumers (volumetric fog) need linear depth BEFORE Present runs its resolve,
+		// otherwise ms_pResolvedDepthSRV still holds the previous frame. Resolves on demand and
+		// hands back the sampleable R32_FLOAT view; NULL when depth is unavailable.
+		static ID3D11ShaderResourceView* ResolveAndGetDepthSRV();
+	protected:
+
 #ifdef ENABLE_BLOOM
 		// Scene texture (full-res, non-MSAA, for bloom input)
 		static ID3D11Texture2D*			ms_pSceneTexture;

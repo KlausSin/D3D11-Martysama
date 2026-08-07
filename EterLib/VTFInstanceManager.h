@@ -118,6 +118,17 @@ public:
 
 	void FlushDeferredRigidBatches();
 
+	// Drop every deferred entry that points at this model instance. The batches hold RAW
+	// CGrannyModelInstance* and are only cleared inside CPythonCharacterManager::Render(), so an
+	// instance destroyed on any other screen (notably the create-character gender switch) could
+	// stay referenced and be drawn again at its last transform — the "hair floating in the air".
+	// Instances come from a CDynamicPool and are recycled, so a stale pointer can also resolve to a
+	// DIFFERENT live instance. Called from CGrannyModelInstance::Clear() so it holds everywhere.
+	void InvalidateModelInstance(const CGrannyModelInstance* pModelInst);
+
+	size_t GetDeferredRigidCount() const;
+	size_t GetDeferredShadowCount() const;
+
 	void ClearDeferredShadowBatches();
 	bool DeferRigidModelInstanceForShadow(CGrannyModel* pModel, CGrannyModelInstance* pModelInst);
 	bool HasDeferredShadowBatches() const { return !m_deferredShadowBatches.empty(); }

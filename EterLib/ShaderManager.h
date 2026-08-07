@@ -828,6 +828,23 @@ public:
 	bool GetFogEnabled() const { return m_bFogEnabled; }
 	void SetFogColor(DWORD dwColor);
 	void SetFogParams(float fStart, float fEnd, DWORD dwColor);
+	// Volumetric-fog dials, stored in spare CBPerFrame fields so no layout change is needed:
+	//   vFogParams.x = start distance (world units)   vFogColor.a = density multiplier (0..4)
+	// The dial VALUES live here, not only in the CB: MapManager calls SetFogParams()/SetFogColor()
+	// every frame from the env data, which was overwriting both CB fields and made the sliders
+	// look dead. ReapplyVolFogDials() restores them after any such write.
+	void  SetVolFogDensity(float d) { m_volFogDensity = (d < 0.0f) ? 0.0f : (d > 4.0f ? 4.0f : d); ReapplyVolFogDials(); }
+	void  SetVolFogStart(float v)   { m_volFogStart = (v < 0.0f) ? 0.0f : v; ReapplyVolFogDials(); }
+	float GetVolFogDensity() const  { return m_volFogDensity; }
+	float GetVolFogStart() const    { return m_volFogStart; }
+	void  ReapplyVolFogDials()
+	{
+		m_cbPerFrame.vFogColor.w  = m_volFogDensity;
+		m_cbPerFrame.vFogParams.x = m_volFogStart;
+		m_bPerFrameDirty = true;
+	}
+	float m_volFogDensity = 1.0f;
+	float m_volFogStart   = 0.0f;
 
 	// Texture factor — must read thread-local on workers (setter writes thread-local)
 	DWORD GetSkyTint() const { return m_dwSkyTint; }

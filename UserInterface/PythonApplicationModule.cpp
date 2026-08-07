@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "../eterlib/VolumetricFog.h"
 #include "Resource.h"
 #include "PythonApplication.h"
 #include "../EterLib/Camera.h"
@@ -204,6 +205,46 @@ PyObject * appSetMinFog(PyObject * poSelf, PyObject * poArgs)
 
 	CPythonApplication::Instance().SetMinFog(fMinFog);
 	return Py_BuildNone();
+}
+
+PyObject * appSetVolumetricFogDensity(PyObject * poSelf, PyObject * poArgs)
+{
+	float fDensity;
+	if (!PyTuple_GetFloat(poArgs, 0, &fDensity))
+		return Py_BuildException();
+
+	SHADERMANAGER.SetVolFogDensity(fDensity);
+	return Py_BuildNone();
+}
+
+PyObject * appSetVolumetricFogRange(PyObject * poSelf, PyObject * poArgs)
+{
+	float fNear, fFar;
+	if (!PyTuple_GetFloat(poArgs, 0, &fNear))
+		return Py_BuildException();
+	if (!PyTuple_GetFloat(poArgs, 1, &fFar))
+		return Py_BuildException();
+
+	SHADERMANAGER.SetVolFogStart(fNear);
+	(void)fFar;
+	return Py_BuildNone();
+}
+
+PyObject * appSetVolumetricFogHeight(PyObject * poSelf, PyObject * poArgs)
+{
+	float fFalloff, fBase;
+	if (!PyTuple_GetFloat(poArgs, 0, &fFalloff))
+		return Py_BuildException();
+	if (!PyTuple_GetFloat(poArgs, 1, &fBase))
+		return Py_BuildException();
+
+	CVolumetricFog::Instance().SetHeight(fFalloff, fBase);
+	return Py_BuildNone();
+}
+
+PyObject * appGetVolumetricFogDensity(PyObject * poSelf, PyObject * poArgs)
+{
+	return Py_BuildValue("f", SHADERMANAGER.GetVolFogDensity());
 }
 
 PyObject* appSetFrameSkip(PyObject* poSelf, PyObject* poArgs)
@@ -1235,6 +1276,10 @@ void initapp()
 
 		{ "SetCameraMaxDistance",		appSetCameraMaxDistance,		METH_VARARGS },
 		{ "SetMinFog",					appSetMinFog,					METH_VARARGS },
+		{ "SetVolumetricFogDensity",	appSetVolumetricFogDensity,		METH_VARARGS },
+		{ "SetVolumetricFogRange",		appSetVolumetricFogRange,		METH_VARARGS },
+		{ "SetVolumetricFogHeight",		appSetVolumetricFogHeight,		METH_VARARGS },
+		{ "GetVolumetricFogDensity",	appGetVolumetricFogDensity,		METH_VARARGS },
 		{ "SetFrameSkip",				appSetFrameSkip,				METH_VARARGS },
 		{ "GetImageInfo",				appGetImageInfo,				METH_VARARGS },
 		{ "GetInfo",					appGetInfo,						METH_VARARGS },

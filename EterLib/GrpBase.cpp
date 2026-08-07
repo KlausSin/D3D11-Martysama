@@ -647,4 +647,36 @@ CGraphicBase::~CGraphicBase()
 }
 
 
+
+ID3D11ShaderResourceView* CGraphicBase::ResolveAndGetDepthSRV()
+{
+#ifdef ENABLE_SSAO
+#ifdef ENABLE_MSAA
+	if (ms_uMSAASampleCount > 1)
+	{
+		if (!ms_pMSAADepthStencilSRV || !ms_pResolvedDepthRTV)
+			return NULL;
+		// The MSAA depth buffer is still bound as the DSV at this point in the frame. Binding it
+		// as an SRV too makes D3D silently drop one of them, so the resolve reads nothing and the
+		// consumer gets garbage depth. Release the DSV first, then restore it for the rest of the frame.
+		ID3D11DeviceContext* pCtx = SHADERMANAGER.GetActiveContext();
+		ID3D11RenderTargetView* pRTV = GetRenderTargetView();
+		if (pCtx && pRTV)
+			pCtx->OMSetRenderTargets(1, &pRTV, NULL);
+
+		const D3D11_VIEWPORT& vp = GetViewport();
+		SHADERMANAGER.RenderDepthResolve(ms_pMSAADepthStencilSRV, ms_pResolvedDepthRTV,
+		                                 (UINT)vp.Width, (UINT)vp.Height);
+
+		if (pCtx && pRTV)
+			pCtx->OMSetRenderTargets(1, &pRTV, GetDepthStencilView());
+		return ms_pResolvedDepthSRV;
+	}
+#endif
+	return ms_pDepthStencilSRV;
+#else
+	return NULL;
+#endif
+}
+
 //martysama0134's dcf42890919f0da1c0e6dbb7f15bc7ec

@@ -9,6 +9,7 @@
 
 #include "../eterlib/ShaderInit.h"
 #include "../eterlib/ShaderManager.h"
+#include "../eterlib/VolumetricFog.h"
 
 #ifdef ENABLE_IMGUI_MANAGER
 #include "../eterLib/ImGuiManager.h"
