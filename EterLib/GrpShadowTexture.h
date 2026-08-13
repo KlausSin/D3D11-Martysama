@@ -38,8 +38,4 @@ class CGraphicShadowTexture : public CGraphicTexture
 		// Cached old render targets
 		ID3D11RenderTargetView*		m_pOldRTV;
 		ID3D11DepthStencilView*		m_pOldDSV;
-
-		// Saved render states for Begin/End
-		bool						m_bSavedAlphaTestEnabled;
-		DWORD						m_dwSavedParticleColor;
 };

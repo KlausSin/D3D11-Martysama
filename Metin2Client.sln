@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31624.102
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.12023.21
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CWebBrowser", "CWebBrowser\CWebBrowser.vcxproj", "{D64AE35F-F982-46D4-8E38-09E5C9752955}"
 EndProject
@@ -43,6 +43,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimalloc", "..\Extern\mimalloc\mimalloc.vcxproj", "{7F2E0B8C-4A91-4D2E-9B3F-8C1A5D9E0F01}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "enkiTS", "..\Extern\enkiTS\enkiTS.vcxproj", "{7F2E0B8C-4A91-4D2E-9B3F-8C1A5D9E0F02}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "assimp_mesh", "assimp_mesh\assimp_mesh.vcxproj", "{30455070-391D-4D31-8501-1FD1869E3D83}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -220,6 +222,14 @@ Global
 		{7F2E0B8C-4A91-4D2E-9B3F-8C1A5D9E0F02}.Release|Win32.Build.0 = Release|Win32
 		{7F2E0B8C-4A91-4D2E-9B3F-8C1A5D9E0F02}.Release|x64.ActiveCfg = Release|x64
 		{7F2E0B8C-4A91-4D2E-9B3F-8C1A5D9E0F02}.Release|x64.Build.0 = Release|x64
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Debug|Win32.ActiveCfg = Debug|Win32
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Debug|Win32.Build.0 = Debug|Win32
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Debug|x64.ActiveCfg = Debug|x64
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Debug|x64.Build.0 = Debug|x64
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Release|Win32.ActiveCfg = Release|Win32
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Release|Win32.Build.0 = Release|Win32
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Release|x64.ActiveCfg = Release|x64
+		{30455070-391D-4D31-8501-1FD1869E3D83}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

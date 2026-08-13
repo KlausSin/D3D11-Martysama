@@ -2092,33 +2092,35 @@ void CInstanceBase::Render()
 	m_kHorse.Render();
 	m_GraphicThingInstance.Render();
 
-	if (CActorInstance::IsDirLine())
-	{
-		if (NEW_GetDstPixelPositionRef().x != 0.0f)
-		{
-			static CScreen s_kScreen;
+	if (!CActorInstance::IsDirLine())
+		return;
 
-			SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE, FALSE);
-			SHADERMANAGER.SetFogEnabled(false);
-			SHADERMANAGER.SetLightingEnabled(false);
+	if (NEW_GetDstPixelPositionRef().x == 0.0f)
+		return;
 
-			TPixelPosition px;
-			m_GraphicThingInstance.GetPixelPosition(&px);
-			Vector3 kD3DVt3Cur(px.x, px.y, px.z);
-			//Vector3 kD3DVt3Cur(NEW_GetSrcPixelPositionRef().x, -NEW_GetSrcPixelPositionRef().y, NEW_GetSrcPixelPositionRef().z);
-			Vector3 kD3DVt3Dest(NEW_GetDstPixelPositionRef().x, -NEW_GetDstPixelPositionRef().y, NEW_GetDstPixelPositionRef().z);
+	SHADERMANAGER.PushState();
 
-			//printf("%s %f\n", GetNameString(), kD3DVt3Cur.y - kD3DVt3Dest.y);
-			//float fdx = NEW_GetDstPixelPositionRef().x - NEW_GetSrcPixelPositionRef().x;
-			//float fdy = NEW_GetDstPixelPositionRef().y - NEW_GetSrcPixelPositionRef().y;
+	static CScreen s_kScreen;
 
-			s_kScreen.SetDiffuseColor(0.0f, 0.0f, 1.0f);
-			s_kScreen.RenderLine3d(kD3DVt3Cur.x, kD3DVt3Cur.y, px.z, kD3DVt3Dest.x, kD3DVt3Dest.y, px.z);
-			SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE);
-			SHADERMANAGER.SetFogEnabled(true);
-			SHADERMANAGER.SetLightingEnabled(true);
-		}
-	}
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, FALSE);
+	SHADERMANAGER.SetFogEnabled(false);
+	SHADERMANAGER.SetLightingEnabled(false);
+
+	TPixelPosition px;
+	m_GraphicThingInstance.GetPixelPosition(&px);
+
+	Vector3 kD3DVt3Cur(px.x, px.y, px.z);
+	Vector3 kD3DVt3Dest(
+		NEW_GetDstPixelPositionRef().x,
+		-NEW_GetDstPixelPositionRef().y,
+		NEW_GetDstPixelPositionRef().z);
+
+	s_kScreen.SetDiffuseColor(0.0f, 0.0f, 1.0f);
+	s_kScreen.RenderLine3d(
+		kD3DVt3Cur.x, kD3DVt3Cur.y, px.z,
+		kD3DVt3Dest.x, kD3DVt3Dest.y, px.z);
+
+	SHADERMANAGER.PopState();
 }
 
 void CInstanceBase::RenderWithRigidDefer()
@@ -2127,7 +2129,6 @@ void CInstanceBase::RenderWithRigidDefer()
 		return;
 
 	CActorInstance& rkActor = m_GraphicThingInstance;
-
 
 	++ms_dwRenderCounter;
 
@@ -2139,8 +2140,10 @@ void CInstanceBase::RenderWithRigidDefer()
 	if (m_isMainActorFadeArmed && __IsMainInstance())
 	{
 		const float fTargetAlpha = 1.0f;
+
 		m_isMainActorFadeArmed = false;
 		m_isMainActorFadeStarted = true;
+
 		rkActor.SetAlphaValue(0.0f);
 		rkActor.BlendAlphaValue(fTargetAlpha, 1.0f);
 	}
@@ -2152,49 +2155,51 @@ void CInstanceBase::RenderWithRigidDefer()
 		return;
 	}
 
+	SHADERMANAGER.PushState();
+
 	TMaterial kMtrl;
 	SHADERMANAGER.GetMaterial(&kMtrl);
 	SHADERMANAGER.SetMaterial(&kMtrl);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 
-	// Diffuse pass: render skinned parts only
 	switch (rkActor.GetRenderMode())
 	{
-		case CActorInstance::RENDER_MODE_BLEND:
-			if (1.0f == rkActor.GetAlphaValue())
-			{
-				rkActor.BeginDiffuseRender();
-				rkActor.RenderWithOneTexture_SkinnedOnly();
-				rkActor.EndDiffuseRender();
-			}
-			else if (rkActor.GetAlphaValue() > 0.0f)
-			{
-				rkActor.BeginBlendRender();
-				rkActor.RenderWithOneTexture_SkinnedOnly();
-				rkActor.EndBlendRender();
-			}
-			break;
-		case CActorInstance::RENDER_MODE_ADD:
-			rkActor.BeginAddRender();
-			rkActor.RenderWithOneTexture_SkinnedOnly();
-			rkActor.EndAddRender();
-			break;
-		case CActorInstance::RENDER_MODE_MODULATE:
-			rkActor.BeginModulateRender();
-			rkActor.RenderWithOneTexture_SkinnedOnly();
-			rkActor.EndModulateRender();
-			break;
-		default:
+	case CActorInstance::RENDER_MODE_BLEND:
+		if (rkActor.GetAlphaValue() == 1.0f)
+		{
 			rkActor.BeginDiffuseRender();
 			rkActor.RenderWithOneTexture_SkinnedOnly();
 			rkActor.EndDiffuseRender();
-			break;
+		}
+		else if (rkActor.GetAlphaValue() > 0.0f)
+		{
+			rkActor.BeginBlendRender();
+			rkActor.RenderWithOneTexture_SkinnedOnly();
+			rkActor.EndBlendRender();
+		}
+		break;
+
+	case CActorInstance::RENDER_MODE_ADD:
+		rkActor.BeginAddRender();
+		rkActor.RenderWithOneTexture_SkinnedOnly();
+		rkActor.EndAddRender();
+		break;
+
+	case CActorInstance::RENDER_MODE_MODULATE:
+		rkActor.BeginModulateRender();
+		rkActor.RenderWithOneTexture_SkinnedOnly();
+		rkActor.EndModulateRender();
+		break;
+
+	default:
+		rkActor.BeginDiffuseRender();
+		rkActor.RenderWithOneTexture_SkinnedOnly();
+		rkActor.EndDiffuseRender();
+		break;
 	}
 
+	SHADERMANAGER.PopState();
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
-
-	// Collect rigid parts for deferred VTF batching
 	for (DWORD idx = 0; idx < rkActor.GetLODControllerCount(); ++idx)
 	{
 		CGrannyLODController* pLOD = rkActor.GetLODControllerPointer(idx);
@@ -2205,12 +2210,12 @@ void CInstanceBase::RenderWithRigidDefer()
 		if (!pModelInst || pModelInst->IsEmpty())
 			continue;
 
-		if (pModelInst->HasRigidMeshes())
-		{
-			CGrannyModel* pModel = pModelInst->GetModel();
-			if (pModel)
-				VTFMANAGER.DeferRigidModelInstance(pModel, pModelInst);
-		}
+		if (!pModelInst->HasRigidMeshes())
+			continue;
+
+		CGrannyModel* pModel = pModelInst->GetModel();
+		if (pModel)
+			VTFMANAGER.DeferRigidModelInstance(pModel, pModelInst);
 	}
 }
 

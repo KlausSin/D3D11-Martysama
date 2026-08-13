@@ -31,9 +31,11 @@ void CDungeonModelInstance::RenderDungeonBlockShadow()
 
 	if (SHADERMANAGER.IsInitialized())
 		SHADERMANAGER.SetParticleColor(0xffffffff);
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_ZERO);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_SRCCOLOR);
+
+	SHADERMANAGER.PushState();
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_ZERO);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_SRCCOLOR);
 
 	SHADERMANAGER.SetInputLayout(INPUT_LAYOUT_PNT2);
 	ID3D11Buffer* lpd3dRigidPNTVtxBuf = m_pModel->GetPNTD3DVertexBuffer();
@@ -43,9 +45,7 @@ void CDungeonModelInstance::RenderDungeonBlockShadow()
 		RenderMeshNodeListWithoutTexture(CGrannyMesh::TYPE_RIGID, CGrannyMaterial::TYPE_BLEND_PNT);
 	}
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+	SHADERMANAGER.PopState();
 
 	EndShaderShadowRender();
 }

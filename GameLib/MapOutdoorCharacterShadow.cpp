@@ -177,7 +177,6 @@ void CMapOutdoor::ReleaseCharacterShadowTexture()
 
 DWORD dwLightEnable = FALSE;
 DWORD dwSavedParticleColor = 0xFFFFFFFF;
-
 bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 {
 	if (!ms_pContext)
@@ -208,20 +207,18 @@ bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 	ID3D11RenderTargetView* pRTV = m_lpShadowMapRTV[cascadeIndex];
 	ID3D11DepthStencilView* pDSV = m_lpShadowMapDSV[cascadeIndex];
 
-	if (!pDSV)   // depth-only now: pRTV is intentionally null
+	if (!pDSV)
 	{
 		m_bShadowRenderActive = false;
 		return false;
 	}
-
-	m_bShadowRenderActive = true;
 
 	if (!m_bShadowSunLatched)
 	{
 		const float SHADOW_SUN_ELEV_Z = 0.625f;
 		const float fHoriz = sqrtf(1.0f - SHADOW_SUN_ELEV_Z * SHADOW_SUN_ELEV_Z);
 
-		float fAzimuth = 3.9269908f;   // 225 deg, used only if the map has no usable light direction
+		float fAzimuth = 3.9269908f;
 		if (mc_pEnvironmentData)
 		{
 			const Vector3& vLightDir = mc_pEnvironmentData->DirLights[ENV_DIRLIGHT_BACKGROUND].Direction;
@@ -240,21 +237,27 @@ bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 	const float SHADOW_SUN_DIR_Z = m_v3ShadowSunDir.z;
 
 	Vector3 v3Target = pCurrentCamera->GetTarget();
-
-	// Ortho projection sized by this cascade
 	float mapSize = m_fCascadeSize[cascadeIndex];
 
 	if (m_wShadowMapSize > 0)
 	{
 		Vector3 vZ(SHADOW_SUN_DIR_X, SHADOW_SUN_DIR_Y, SHADOW_SUN_DIR_Z);
-		Vector3 vX(-vZ.y, vZ.x, 0.0f);						// cross(worldUp, vZ)
+		Vector3 vX(-vZ.y, vZ.x, 0.0f);
+
 		float fLen = sqrtf(vX.x * vX.x + vX.y * vX.y);
-		if (fLen > 0.001f) { vX.x /= fLen; vX.y /= fLen; }
-		Vector3 vY(vZ.y * vX.z - vZ.z * vX.y,				// cross(vZ, vX)
-				   vZ.z * vX.x - vZ.x * vX.z,
-				   vZ.x * vX.y - vZ.y * vX.x);
+		if (fLen > 0.001f)
+		{
+			vX.x /= fLen;
+			vX.y /= fLen;
+		}
+
+		Vector3 vY(
+			vZ.y * vX.z - vZ.z * vX.y,
+			vZ.z * vX.x - vZ.x * vX.z,
+			vZ.x * vX.y - vZ.y * vX.x);
 
 		const float fTexel = mapSize / (float)m_wShadowMapSize;
+
 		float fU = v3Target.x * vX.x + v3Target.y * vX.y + v3Target.z * vX.z;
 		float fV = v3Target.x * vY.x + v3Target.y * vY.y + v3Target.z * vY.z;
 		const float fW = v3Target.x * vZ.x + v3Target.y * vZ.y + v3Target.z * vZ.z;
@@ -272,15 +275,15 @@ bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 
 	{
 		static const DWORD s_adwInterval[CSM_NUM_CASCADES] = { 1, 1, 2, 4 };
-		static const DWORD s_adwPhase[CSM_NUM_CASCADES]    = { 0, 0, 0, 1 };
+		static const DWORD s_adwPhase[CSM_NUM_CASCADES] = { 0, 0, 0, 1 };
 
 		const Vector3& v3Prev = m_v3ShadowCascadeCenter[cascadeIndex];
 		const bool bMoved = (v3Target.x != v3Prev.x) || (v3Target.y != v3Prev.y) || (v3Target.z != v3Prev.z);
-		const bool bDue   = ((m_dwShadowFrameIndex % s_adwInterval[cascadeIndex]) == s_adwPhase[cascadeIndex]);
+		const bool bDue = ((m_dwShadowFrameIndex % s_adwInterval[cascadeIndex]) == s_adwPhase[cascadeIndex]);
 
 		if (m_bShadowCascadeValid[cascadeIndex] && !bMoved && !bDue)
 		{
-			SHADERMANAGER.SetShadowCullPlanes(NULL);   // nothing renders, so leave no stale planes behind
+			SHADERMANAGER.SetShadowCullPlanes(nullptr);
 			m_bShadowRenderActive = false;
 			return false;
 		}
@@ -291,63 +294,66 @@ bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 
 	Vector3 v3LightEye;
 	const float fLightDist = SHADOW_LIGHT_OFFSET * 2.0f;
+
 	v3LightEye.x = v3Target.x + SHADOW_SUN_DIR_X * fLightDist;
 	v3LightEye.y = v3Target.y + SHADOW_SUN_DIR_Y * fLightDist;
 	v3LightEye.z = v3Target.z + SHADOW_SUN_DIR_Z * fLightDist;
 
-	auto val = Vector3(0.0f, 0.0f, 1.0f);
-	MatrixLookAtRH(&m_matLightView, &v3LightEye, &v3Target, &val);
+	Vector3 up(0.0f, 0.0f, 1.0f);
+	MatrixLookAtRH(&m_matLightView, &v3LightEye, &v3Target, &up);
 
 	Matrix matLightProj;
 	MatrixOrthoRH(&matLightProj, mapSize, mapSize, SHADOW_NEAR_PLANE, SHADOW_FAR_PLANE);
 
-	// Store the cascade matrix for shader sampling (no snap — must match rendering exactly)
 	MatrixMultiply(&m_matShadowCascade[cascadeIndex], &m_matLightView, &matLightProj);
 
 	{
 		const Matrix& M = m_matShadowCascade[cascadeIndex];
+
 		float afPlane[4][4] =
 		{
-			{  M._11,  M._21,  M._31,  M._41 + 1.0f },   // left   ( clip.x + clip.w >= 0 )
-			{ -M._11, -M._21, -M._31, -M._41 + 1.0f },   // right  ( clip.w - clip.x >= 0 )
-			{  M._12,  M._22,  M._32,  M._42 + 1.0f },   // bottom ( clip.y + clip.w >= 0 )
-			{ -M._12, -M._22, -M._32, -M._42 + 1.0f },   // top    ( clip.w - clip.y >= 0 )
+			{  M._11,  M._21,  M._31,  M._41 + 1.0f },
+			{ -M._11, -M._21, -M._31, -M._41 + 1.0f },
+			{  M._12,  M._22,  M._32,  M._42 + 1.0f },
+			{ -M._12, -M._22, -M._32, -M._42 + 1.0f },
 		};
 
 		for (int i = 0; i < 4; ++i)
 		{
-			float fLen = sqrtf(afPlane[i][0] * afPlane[i][0] +
-							   afPlane[i][1] * afPlane[i][1] +
-							   afPlane[i][2] * afPlane[i][2]);
+			float fLen = sqrtf(
+				afPlane[i][0] * afPlane[i][0] +
+				afPlane[i][1] * afPlane[i][1] +
+				afPlane[i][2] * afPlane[i][2]);
+
 			if (fLen > 0.000001f)
 			{
-				afPlane[i][0] /= fLen; afPlane[i][1] /= fLen;
-				afPlane[i][2] /= fLen; afPlane[i][3] /= fLen;
+				afPlane[i][0] /= fLen;
+				afPlane[i][1] /= fLen;
+				afPlane[i][2] /= fLen;
+				afPlane[i][3] /= fLen;
 			}
 		}
 
 		SHADERMANAGER.SetShadowCullPlanes(&afPlane[0][0]);
 	}
 
-	SHADERMANAGER.SaveTransform(MATRIX_VIEW, &m_matLightView);
-	SHADERMANAGER.SaveTransform(MATRIX_PROJECTION, &matLightProj);
+	SHADERMANAGER.PushState();
 
-	dwLightEnable = SHADERMANAGER.GetLightingEnabled() ? TRUE : FALSE;
+	SHADERMANAGER.SetMatrix(MATRIX_VIEW, &m_matLightView);
+	SHADERMANAGER.SetMatrix(MATRIX_PROJECTION, &matLightProj);
 	SHADERMANAGER.SetLightingEnabled(false);
-
-	dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
 	SHADERMANAGER.SetParticleColor(0xFF808080);
 	SHADERMANAGER.SetCharacterShadowPass(true);
 
 	BeginShaderShadowRender();
 
-	// Unbind shadow SRVs before using as render targets
 	SHADERMANAGER.SetShadowTextures(nullptr, nullptr);
 	SHADERMANAGER.SetShadowMidFarTextures(nullptr, nullptr);
 
 	bool bSuccess = true;
 
 	ms_pContext->OMGetRenderTargets(1, &m_lpBackupRenderTargetSurface, &m_lpBackupDepthSurface);
+
 	if (!m_lpBackupRenderTargetSurface)
 	{
 		TraceError("CMapOutdoor::BeginRenderCharacterShadowToTexture : Unable to Save Window Render Target\n");
@@ -355,20 +361,22 @@ bool CMapOutdoor::BeginRenderCharacterShadowToTexture(int cascadeIndex)
 	}
 
 	ms_pContext->OMSetRenderTargets(0, nullptr, pDSV);
-
 	ms_pContext->ClearDepthStencilView(pDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHFUNC, COMPARISON_LESSEQUAL);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHFUNC, COMPARISON_LESSEQUAL);
 
 	const float fSlopeScaledBias = 2.0f;
-	SHADERMANAGER.SavePipelineState(PSTATE_SLOPESCALEDDEPTHBIAS, *(const DWORD*)&fSlopeScaledBias);
+	DWORD dwSlopeScaledBias;
+	memcpy(&dwSlopeScaledBias, &fSlopeScaledBias, sizeof(DWORD));
+	SHADERMANAGER.SetPipelineState(PSTATE_SLOPESCALEDDEPTHBIAS, dwSlopeScaledBias);
 
 	UINT numViewports = 1;
 	ms_pContext->RSGetViewports(&numViewports, &m_BackupViewport);
 	ms_pContext->RSSetViewports(1, &m_ShadowMapViewport);
 
+	m_bShadowRenderActive = true;
 	return bSuccess;
 }
 
@@ -376,6 +384,7 @@ void CMapOutdoor::EndRenderCharacterShadowToTexture()
 {
 	if (!m_bShadowRenderActive)
 		return;
+
 	if (!ms_pContext)
 	{
 		m_bShadowRenderActive = false;
@@ -384,12 +393,7 @@ void CMapOutdoor::EndRenderCharacterShadowToTexture()
 
 	m_bShadowRenderActive = false;
 
-	SHADERMANAGER.SetShadowCullPlanes(NULL);   // culling applies to the shadow pass only
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_SLOPESCALEDDEPTHBIAS);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHFUNC);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE);
+	SHADERMANAGER.SetShadowCullPlanes(nullptr);
 
 	EndShaderShadowRender();
 
@@ -399,12 +403,7 @@ void CMapOutdoor::EndRenderCharacterShadowToTexture()
 	SAFE_RELEASE(m_lpBackupRenderTargetSurface);
 	SAFE_RELEASE(m_lpBackupDepthSurface);
 
-	SHADERMANAGER.RestoreTransform(MATRIX_VIEW);
-	SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
-
-	SHADERMANAGER.SetLightingEnabled(dwLightEnable != FALSE);
-	SHADERMANAGER.SetParticleColor(dwSavedParticleColor);
-	SHADERMANAGER.SetCharacterShadowPass(false);
+	SHADERMANAGER.PopState();
 }
 
 void CMapOutdoor::RenderObjectShadowsToTexture()

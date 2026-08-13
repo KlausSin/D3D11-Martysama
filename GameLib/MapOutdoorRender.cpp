@@ -621,100 +621,90 @@ void CMapOutdoor::RenderArea(bool bRenderAmbience)
 
 	for (int j = 0; j < AROUND_AREA_NUM; ++j)
 	{
-		CArea * pArea;
+		CArea* pArea;
 		if (GetAreaPointer(j, &pArea))
-		{
 			pArea->RenderDungeon();
-		}
 	}
 
 #ifndef WORLD_EDITOR
-	// PCBlocker
 	std::for_each(m_PCBlockerVector.begin(), m_PCBlockerVector.end(), FPCBlockerHide());
 
-	// Shadow Receiver
 	if (m_bDrawShadow && m_bDrawChrShadow)
 	{
-		if (mc_pEnvironmentData != NULL)
+		SHADERMANAGER.PushState();
+
+		if (mc_pEnvironmentData)
 			SHADERMANAGER.SetFogColor(0xFFFFFFFF);
 
-		SHADERMANAGER.SaveTransform(MATRIX_TEXTURE1, &m_matDynamicShadow);
+		SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &m_matDynamicShadow);
 		SHADERMANAGER.SetShaderResource(1, m_lpCharacterShadowMapTexture);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_BORDER);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_BORDER);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_BORDERCOLOR, 0xFFFFFFFF);
+
+		SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_BORDER);
+		SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_BORDER);
+		SHADERMANAGER.SetSamplerState(1, SAMPLER_BORDERCOLOR, 0xFFFFFFFF);
 
 		SHADERMANAGER.SetShadowTextures(m_lpShadowMapSRV[3], m_lpShadowMapSRV[0]);
 		SHADERMANAGER.SetShadowMidFarTextures(m_lpShadowMapSRV[1], m_lpShadowMapSRV[2]);
-
 		SHADERMANAGER.SetTwoTextureBlend(true);
 
 		std::for_each(m_ShadowReceiverVector.begin(), m_ShadowReceiverVector.end(), FAreaRenderShadow());
 
-		SHADERMANAGER.SetTwoTextureBlend(false);
-
-		SHADERMANAGER.SetShaderResource(1, NULL);  // Legacy shadow map (slot 1)
-		SHADERMANAGER.SetShadowTextures(nullptr, nullptr);
-		SHADERMANAGER.SetShadowMidFarTextures(nullptr, nullptr);
-
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_BORDERCOLOR);
-
-		SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE1);
-
-		if (mc_pEnvironmentData != NULL)
-			SHADERMANAGER.SetFogColor(mc_pEnvironmentData->FogColor);
+		SHADERMANAGER.PopState();
 	}
 #endif
 
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, TRUE);
+	SHADERMANAGER.PushState();
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, TRUE);
 
-	bool m_isDisableSortRendering=false;
+	bool m_isDisableSortRendering = false;
 
 	if (m_isDisableSortRendering)
 	{
 		for (int i = 0; i < AROUND_AREA_NUM; ++i)
 		{
-			CArea * pArea;
-			if (GetAreaPointer(i, &pArea))
+			CArea* pArea;
+			if (!GetAreaPointer(i, &pArea))
+				continue;
+
+			pArea->Render();
+
+			m_dwRenderedCRCNum += pArea->DEBUG_GetRenderedCRCNum();
+			m_dwRenderedGraphicThingInstanceNum += pArea->DEBUG_GetRenderedGrapphicThingInstanceNum();
+
+			CArea::TCRCWithNumberVector& rCRCWithNumberVector = pArea->DEBUG_GetRenderedCRCWithNumVector();
+
+			for (auto it = rCRCWithNumberVector.begin(); it != rCRCWithNumberVector.end(); ++it)
 			{
-				pArea->Render();
+				DWORD dwCRC = it->dwCRC;
 
-				m_dwRenderedCRCNum += pArea->DEBUG_GetRenderedCRCNum();
-				m_dwRenderedGraphicThingInstanceNum += pArea->DEBUG_GetRenderedGrapphicThingInstanceNum();
+				auto found = std::find_if(
+					m_dwRenderedCRCWithNumberVector.begin(),
+					m_dwRenderedCRCWithNumberVector.end(),
+					CArea::FFindIfCRC(dwCRC));
 
-				CArea::TCRCWithNumberVector & rCRCWithNumberVector = pArea->DEBUG_GetRenderedCRCWithNumVector();
-
-				CArea::TCRCWithNumberVector::iterator aIterator = rCRCWithNumberVector.begin();
-				while (aIterator != rCRCWithNumberVector.end())
+				if (found == m_dwRenderedCRCWithNumberVector.end())
 				{
-					DWORD dwCRC = (*aIterator++).dwCRC;
-
-					CArea::TCRCWithNumberVector::iterator aCRCWithNumberVectorIterator =
-						std::find_if(m_dwRenderedCRCWithNumberVector.begin(), m_dwRenderedCRCWithNumberVector.end(), CArea::FFindIfCRC(dwCRC));
-
-					if ( m_dwRenderedCRCWithNumberVector.end() == aCRCWithNumberVectorIterator)
-					{
-						CArea::TCRCWithNumber aCRCWithNumber;
-						aCRCWithNumber.dwCRC = dwCRC;
-						aCRCWithNumber.dwNumber = 1;
-						m_dwRenderedCRCWithNumberVector.push_back(aCRCWithNumber);
-					}
-					else
-					{
-						CArea::TCRCWithNumber & rCRCWithNumber = *aCRCWithNumberVectorIterator;
-						rCRCWithNumber.dwNumber += 1;
-					}
+					CArea::TCRCWithNumber aCRCWithNumber;
+					aCRCWithNumber.dwCRC = dwCRC;
+					aCRCWithNumber.dwNumber = 1;
+					m_dwRenderedCRCWithNumberVector.push_back(aCRCWithNumber);
 				}
-	#ifdef WORLD_EDITOR
-				if (bRenderAmbience)
-					pArea->RenderAmbience();
-	#endif
+				else
+				{
+					found->dwNumber += 1;
+				}
 			}
+
+#ifdef WORLD_EDITOR
+			if (bRenderAmbience)
+				pArea->RenderAmbience();
+#endif
 		}
 
-		std::sort(m_dwRenderedCRCWithNumberVector.begin(), m_dwRenderedCRCWithNumberVector.end(), CArea::CRCNumComp());
+		std::sort(
+			m_dwRenderedCRCWithNumberVector.begin(),
+			m_dwRenderedCRCWithNumberVector.end(),
+			CArea::CRCNumComp());
 	}
 	else
 	{
@@ -723,29 +713,38 @@ void CMapOutdoor::RenderArea(bool bRenderAmbience)
 
 		for (int i = 0; i < AROUND_AREA_NUM; ++i)
 		{
-			CArea * pArea;
-			if (GetAreaPointer(i, &pArea))
-			{
-				pArea->CollectRenderingObject(s_kVct_pkOpaqueThingInstSort);
-#ifdef WORLD_EDITOR
-				if (bRenderAmbience)
-					pArea->RenderAmbience();
-#endif
-			}
+			CArea* pArea;
+			if (!GetAreaPointer(i, &pArea))
+				continue;
 
+			pArea->CollectRenderingObject(s_kVct_pkOpaqueThingInstSort);
+
+#ifdef WORLD_EDITOR
+			if (bRenderAmbience)
+				pArea->RenderAmbience();
+#endif
 		}
 
-		std::sort(s_kVct_pkOpaqueThingInstSort.begin(), s_kVct_pkOpaqueThingInstSort.end(), CMapOutdoor_LessThingInstancePtrRenderOrder());
-		std::for_each(s_kVct_pkOpaqueThingInstSort.begin(), s_kVct_pkOpaqueThingInstSort.end(), CMapOutdoor_FOpaqueThingInstanceRender());
+		std::sort(
+			s_kVct_pkOpaqueThingInstSort.begin(),
+			s_kVct_pkOpaqueThingInstSort.end(),
+			CMapOutdoor_LessThingInstancePtrRenderOrder());
+
+		std::for_each(
+			s_kVct_pkOpaqueThingInstSort.begin(),
+			s_kVct_pkOpaqueThingInstSort.end(),
+			CMapOutdoor_FOpaqueThingInstanceRender());
 	}
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
+	SHADERMANAGER.PopState();
 
 #ifndef WORLD_EDITOR
-	// Shadow Receiver
 	if (m_bDrawShadow && m_bDrawChrShadow)
 	{
-		std::for_each(m_ShadowReceiverVector.begin(), m_ShadowReceiverVector.end(), std::void_mem_fun(&CGraphicObjectInstance::Show));
+		std::for_each(
+			m_ShadowReceiverVector.begin(),
+			m_ShadowReceiverVector.end(),
+			std::void_mem_fun(&CGraphicObjectInstance::Show));
 	}
 #endif
 }
@@ -773,17 +772,15 @@ void CMapOutdoor::RenderBlendArea()
 
 		std::sort(s_kVct_pkBlendThingInstSort.begin(), s_kVct_pkBlendThingInstSort.end(), CMapOutdoor_LessThingInstancePtrRenderOrder());
 
-		SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, TRUE);
-		SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-		SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-		SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
+		SHADERMANAGER.PushState();
+		SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, TRUE);
+		SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+		SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+		SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 
 		std::for_each(s_kVct_pkBlendThingInstSort.begin(), s_kVct_pkBlendThingInstSort.end(), CMapOutdoor_FBlendThingInstanceRender());
 
-		SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-		SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-		SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
-		SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
+		SHADERMANAGER.PopState();
 	}
 }
 void CMapOutdoor::RenderDungeon()
@@ -800,27 +797,24 @@ void CMapOutdoor::RenderDungeon()
 void CMapOutdoor::RenderPCBlocker()
 {
 #ifndef WORLD_EDITOR
-	// PCBlocker
-	if (m_PCBlockerVector.size() != 0)
-	{
-		SHADERMANAGER.SetDefaultTexture(0);
-		SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-		SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	if (m_PCBlockerVector.empty())
+		return;
 
-		SHADERMANAGER.SaveTransform(MATRIX_TEXTURE1, &m_matBuildingTransparent);
-		CGraphicTexture* pBuildingTex = m_BuildingTransparentImageInstance.GetTexturePointer();
-		if (pBuildingTex)
-			SHADERMANAGER.SetShaderResource(1, pBuildingTex->GetD3DTexture());
+	SHADERMANAGER.PushState();
 
-		std::for_each(m_PCBlockerVector.begin(), m_PCBlockerVector.end(), FRenderPCBlocker());
+	SHADERMANAGER.SetDefaultTexture(0);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &m_matBuildingTransparent);
 
-		SHADERMANAGER.SetShaderResource(1, NULL);
-		SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE1);
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
-		SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	}
+	CGraphicTexture* pBuildingTex = m_BuildingTransparentImageInstance.GetTexturePointer();
+	if (pBuildingTex)
+		SHADERMANAGER.SetShaderResource(1, pBuildingTex->GetD3DTexture());
+
+	std::for_each(m_PCBlockerVector.begin(), m_PCBlockerVector.end(), FRenderPCBlocker());
+
+	SHADERMANAGER.PopState();
 #endif
 }
 
@@ -979,6 +973,8 @@ void CMapOutdoor::RenderMarkedArea()
 	if (!m_pTerrainPatchProxyList)
 		return;
 
+	SHADERMANAGER.PushState();
+
 	m_matWorldForCommonUse._41 = 0.0f;
 	m_matWorldForCommonUse._42 = 0.0f;
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorldForCommonUse);
@@ -987,44 +983,35 @@ void CMapOutdoor::RenderMarkedArea()
 	EPrimitiveTopology eType;
 	SelectIndexBuffer(0, &wPrimitiveCount, &eType);
 
-	Matrix matTexTransform, matTexTransformTemp;
-
+	Matrix matTexTransform;
 	MatrixScaling(&matTexTransform, m_fTerrainTexCoordBase * 32.0f, -m_fTerrainTexCoordBase * 32.0f, 0.0f);
 	MatrixMultiply(&matTexTransform, &m_matViewInverse, &matTexTransform);
-	SHADERMANAGER.SaveTransform(MATRIX_TEXTURE0, &matTexTransform);
-	SHADERMANAGER.SaveTransform(MATRIX_TEXTURE1, &matTexTransform);
 
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matTexTransform);
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &matTexTransform);
+
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 
 	static long lStartTime = timeGetTime();
-	float fTime = float((timeGetTime() - lStartTime)%3000) / 3000.0f;
+	float fTime = float((timeGetTime() - lStartTime) % 3000) / 3000.0f;
 	float fAlpha = fabs(fTime - 0.5f) / 2.0f + 0.1f;
+
 	if (SHADERMANAGER.IsInitialized())
 		SHADERMANAGER.SetParticleColor(Color(1.0f, 1.0f, 1.0f, fAlpha));
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
 
 	SHADERMANAGER.SetShaderResource(0, m_attrImageInstance.GetTexturePointer()->GetD3DTexture());
 
 	RecurseRenderAttr(m_pRootNode);
 
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_MAGFILTER);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_MIPFILTER);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
-
-	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE0);
-	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE1);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+	SHADERMANAGER.PopState();
 }
 
 void CMapOutdoor::RecurseRenderAttr(CTerrainQuadtreeNode *Node, bool bCullEnable)

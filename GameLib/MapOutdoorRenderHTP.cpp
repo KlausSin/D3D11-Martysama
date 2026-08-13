@@ -13,27 +13,24 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	float fFogNearDistance;
 	if (mc_pEnvironmentData)
 	{
-		dwFogColor=mc_pEnvironmentData->FogColor;
-		fFogNearDistance=mc_pEnvironmentData->GetFogNearDistance();
-		fFogFarDistance=mc_pEnvironmentData->GetFogFarDistance();
+		dwFogColor = mc_pEnvironmentData->FogColor;
+		fFogNearDistance = mc_pEnvironmentData->GetFogNearDistance();
+		fFogFarDistance = mc_pEnvironmentData->GetFogFarDistance();
 	}
 	else
 	{
-		dwFogColor=0xffffffff;
-		fFogNearDistance=5000.0f;
-		fFogFarDistance=10000.0f;
+		dwFogColor = 0xffffffff;
+		fFogNearDistance = 5000.0f;
+		fFogFarDistance = 10000.0f;
 	}
 
 	// Always use shaders
 	BeginTerrainShaderRender();
 
+	SHADERMANAGER.PushState();
 
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-
-	bool bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
 	SHADERMANAGER.SetAlphaTestEnabled(true);
-
-	DWORD dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
 	SHADERMANAGER.SetParticleColor(dwFogColor);
 
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_WRAP);
@@ -62,8 +59,8 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 
 	SetShaderWorldMatrix(&m_matWorldForCommonUse);
 
-	SHADERMANAGER.SaveTransform(MATRIX_TEXTURE0, &m_matWorldForCommonUse);
-	SHADERMANAGER.SaveTransform(MATRIX_TEXTURE1, &m_matWorldForCommonUse);
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &m_matWorldForCommonUse);
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &m_matWorldForCommonUse);
 
 	// Render State & TextureStageState
 	//////////////////////////////////////////////////////////////////////////
@@ -73,11 +70,11 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	m_iRenderedSplatNum = 0;
 	m_RenderedTextureNumVector.clear();
 
-	std::pair<float, long> fog_far(fFogFarDistance+1600.0f, 0);
-	std::pair<float, long> fog_near(fFogNearDistance-3200.0f, 0);
+	std::pair<float, long> fog_far(fFogFarDistance + 1600.0f, 0);
+	std::pair<float, long> fog_near(fFogNearDistance - 3200.0f, 0);
 
-	std::vector<std::pair<float ,long> >::iterator far_it = std::upper_bound(m_PatchVector.begin(),m_PatchVector.end(),fog_far);
-	std::vector<std::pair<float ,long> >::iterator near_it = std::upper_bound(m_PatchVector.begin(),m_PatchVector.end(),fog_near);
+	std::vector<std::pair<float, long> >::iterator far_it = std::upper_bound(m_PatchVector.begin(), m_PatchVector.end(), fog_far);
+	std::vector<std::pair<float, long> >::iterator near_it = std::upper_bound(m_PatchVector.begin(), m_PatchVector.end(), fog_near);
 
 #ifdef WORLD_EDITOR
 	near_it = m_PatchVector.begin();
@@ -102,7 +99,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 #ifdef WORLD_EDITOR
 	SHADERMANAGER.SetFogEnabled(false);
 
-	for( ; it != near_it; ++it)
+	for (; it != near_it; ++it)
 	{
 		{
 			if (byCUrrentLODLevel == 0 && fLODLevel1Distance <= it->first)
@@ -121,7 +118,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 		if (m_iRenderedSplatNum >= m_iSplatLimit)
 			break;
 
- 		if (m_bDrawWireFrame)
+		if (m_bDrawWireFrame)
 			DrawWireFrame(it->second, wPrimitiveCount, ePrimitiveType);
 	}
 
@@ -129,7 +126,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 
 	if (m_iRenderedSplatNum < m_iSplatLimit)
 	{
-		for(it = near_it; it != far_it; ++it)
+		for (it = near_it; it != far_it; ++it)
 		{
 			{
 				if (byCUrrentLODLevel == 0 && fLODLevel1Distance <= it->first)
@@ -199,6 +196,8 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 		// Shadow pass: set up state once, then render per-patch
 		if (m_bDrawShadow && m_bDrawChrShadow && m_lpCharacterShadowMapTexture && !allPatches.empty())
 		{
+			SHADERMANAGER.PushState();
+
 			SHADERMANAGER.SetLightingEnabled(true);
 			SHADERMANAGER.SetFogColor(0xFFFFFFFF);
 			SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_ZERO);
@@ -230,21 +229,7 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 				__RenderTerrainShadowPass(info.patchNum, wPrimitiveCount, ePrimitiveType);
 			}
 
-			// Restore state after shadow batch
-			SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-			SHADERMANAGER.SetShaderResource(1, NULL);
-			SHADERMANAGER.SetShadowTextures(nullptr, nullptr);
-			SHADERMANAGER.SetShadowMidFarTextures(nullptr, nullptr);
-
-			SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_WRAP);
-			SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_WRAP);
-			SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-			SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
-
-			SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-			SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
-			SHADERMANAGER.SetFogColor(dwFogColor);
-			SHADERMANAGER.SetLightingEnabled(false);
+			SHADERMANAGER.PopState();
 		}
 
 		// Wireframe debug
@@ -282,18 +267,12 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 	SHADERMANAGER.SetFogEnabled(bFogEnable);
 	SHADERMANAGER.SetLightingEnabled(true);
 
-	std::sort(m_RenderedTextureNumVector.begin(),m_RenderedTextureNumVector.end());
+	std::sort(m_RenderedTextureNumVector.begin(), m_RenderedTextureNumVector.end());
 
 	//////////////////////////////////////////////////////////////////////////
-	// Restore Render State
+	// Restore complete render state
 
-	SHADERMANAGER.SetParticleColor(dwSavedParticleColor);
-
-	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE0);
-	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE1);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.SetAlphaTestEnabled(bSavedAlphaTest);
+	SHADERMANAGER.PopState();
 
 	EndTerrainShaderRender();
 
@@ -303,8 +282,8 @@ void CMapOutdoor::__RenderTerrain_RenderHardwareTransformPatch()
 
 void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD wPrimitiveCount, EPrimitiveTopology ePrimitiveType)
 {
-	assert(NULL!=m_pTerrainPatchProxyList && "__HardwareTransformPatch_RenderPatchSplat");
-	CTerrainPatchProxy * pTerrainPatchProxy = &m_pTerrainPatchProxyList[patchnum];
+	assert(NULL != m_pTerrainPatchProxyList && "__HardwareTransformPatch_RenderPatchSplat");
+	CTerrainPatchProxy* pTerrainPatchProxy = &m_pTerrainPatchProxyList[patchnum];
 
 	if (!pTerrainPatchProxy->isUsed())
 		return;
@@ -317,37 +296,37 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 	if (0xFF == ucTerrainNum)
 		return;
 
-	CTerrain * pTerrain;
+	CTerrain* pTerrain;
 	if (!GetTerrainPointer(ucTerrainNum, &pTerrain))
 		return;
 
 	DWORD dwFogColor;
 	if (mc_pEnvironmentData)
-		dwFogColor=mc_pEnvironmentData->FogColor;
+		dwFogColor = mc_pEnvironmentData->FogColor;
 	else
-		dwFogColor=0xffffffff;
+		dwFogColor = 0xffffffff;
 
 	WORD wCoordX, wCoordY;
 	pTerrain->GetCoordinate(&wCoordX, &wCoordY);
 
-	TTerrainSplatPatch & rTerrainSplatPatch = pTerrain->GetTerrainSplatPatch();
+	TTerrainSplatPatch& rTerrainSplatPatch = pTerrain->GetTerrainSplatPatch();
 
 	Matrix matTexTransform, matSplatAlphaTexTransform, matSplatColorTexTransform;
-	m_matWorldForCommonUse._41 = -(float) (wCoordX * CTerrainImpl::TERRAIN_XSIZE);
-	m_matWorldForCommonUse._42 = (float) (wCoordY * CTerrainImpl::TERRAIN_YSIZE);
+	m_matWorldForCommonUse._41 = -(float)(wCoordX * CTerrainImpl::TERRAIN_XSIZE);
+	m_matWorldForCommonUse._42 = (float)(wCoordY * CTerrainImpl::TERRAIN_YSIZE);
 	MatrixMultiply(&matTexTransform, &m_matViewInverse, &m_matWorldForCommonUse);
 	MatrixMultiply(&matSplatAlphaTexTransform, &matTexTransform, &m_matSplatAlpha);
 	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &matSplatAlphaTexTransform);
 
 	Matrix matTiling;
-	MatrixScaling(&matTiling, 1.0f/640.0f, -1.0f/640.0f, 0.0f);
-	matTiling._41=0.0f;
-	matTiling._42=0.0f;
+	MatrixScaling(&matTiling, 1.0f / 640.0f, -1.0f / 640.0f, 0.0f);
+	matTiling._41 = 0.0f;
+	matTiling._42 = 0.0f;
 
 	MatrixMultiply(&matSplatColorTexTransform, &m_matViewInverse, &matTiling);
 	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matSplatColorTexTransform);
 
-	SHADERMANAGER.SetMaterialParams(1.0f/640.0f, -1.0f/640.0f, 0.0f, 0.0f);
+	SHADERMANAGER.SetMaterialParams(1.0f / 640.0f, -1.0f / 640.0f, 0.0f, 0.0f);
 
 	Matrix matWorldOffsetForShader;
 	MatrixIdentity(&matWorldOffsetForShader);
@@ -358,7 +337,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 	MatrixMultiply(&matSplatAlphaForShader, &matWorldOffsetForShader, &m_matSplatAlpha);
 	SetTerrainShaderTextureTransforms(&matSplatColorTexTransform, &matSplatAlphaForShader);
 
-	CGraphicVertexBuffer* pkVB=pTerrainPatchProxy->HardwareTransformPatch_GetVertexBufferPtr();
+	CGraphicVertexBuffer* pkVB = pTerrainPatchProxy->HardwareTransformPatch_GetVertexBufferPtr();
 	if (!pkVB)
 		return;
 
@@ -366,18 +345,18 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 	SHADERMANAGER.SetLightingEnabled(true);
 
-	int iPrevRenderedSplatNum=m_iRenderedSplatNum;
+	int iPrevRenderedSplatNum = m_iRenderedSplatNum;
 
 #ifdef WORLD_EDITOR
 
 	int nRenderTextureCount = 0;
 
-//	if (!m_bShowEntirePatchTextureCount && !(GetAsyncKeyState(VK_LCONTROL) & 0x8000) )
+	//	if (!m_bShowEntirePatchTextureCount && !(GetAsyncKeyState(VK_LCONTROL) & 0x8000) )
 	if (1)
 	{
 		for (DWORD j = 1; j < pTerrain->GetNumTextures(); ++j)
 		{
-			TTerainSplat & rSplat = rTerrainSplatPatch.Splats[j];
+			TTerainSplat& rSplat = rTerrainSplatPatch.Splats[j];
 
 			if (!rSplat.Active)
 				continue;
@@ -440,25 +419,25 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 		}
 
-		if (nRenderTextureCount>=TextureCountThreshold)
+		if (nRenderTextureCount >= TextureCountThreshold)
 		{
-			SHADERMANAGER.SetParticleColor( dwTFactor);
+			SHADERMANAGER.SetParticleColor(dwTFactor);
 			SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
-			SHADERMANAGER.SetParticleColor( dwParticleColor);
+			SHADERMANAGER.SetParticleColor(dwParticleColor);
 		}
 		else
 		{
-			if ( 0 < rTerrainSplatPatch.PatchTileCount[sPatchNum][0] )
+			if (0 < rTerrainSplatPatch.PatchTileCount[sPatchNum][0])
 			{
-					DWORD dwParticleColorFor0Texture = SHADERMANAGER.GetParticleColor();
-				SHADERMANAGER.SetParticleColor( 0xFF88FF88);
+				DWORD dwParticleColorFor0Texture = SHADERMANAGER.GetParticleColor();
+				SHADERMANAGER.SetParticleColor(0xFF88FF88);
 				SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
-				SHADERMANAGER.SetParticleColor( dwParticleColorFor0Texture);
+				SHADERMANAGER.SetParticleColor(dwParticleColorFor0Texture);
 			}
 
 			for (DWORD j = 1; j < pTerrain->GetNumTextures(); ++j)
 			{
-				TTerainSplat & rSplat = rTerrainSplatPatch.Splats[j];
+				TTerainSplat& rSplat = rTerrainSplatPatch.Splats[j];
 
 				if (!rSplat.Active)
 					continue;
@@ -471,7 +450,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 				if (!(GetAsyncKeyState(VK_LSHIFT) & 0x8000))
 				{
-					const TTerrainTexture & rTexture = m_TextureSet.GetTexture(j);
+					const TTerrainTexture& rTexture = m_TextureSet.GetTexture(j);
 
 					MatrixMultiply(&matSplatColorTexTransform, &m_matViewInverse, &rTexture.m_matTransform);
 					SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matSplatColorTexTransform);
@@ -484,23 +463,23 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 				}
 				else
 				{
-							if (dwTextureCount < 71)
+					if (dwTextureCount < 71)
 					{
 						dwParticleColorForTextureBalance = SHADERMANAGER.GetParticleColor();
 						if (dwTextureCount < 51)
-							SHADERMANAGER.SetParticleColor( 0xFFFF0000);
+							SHADERMANAGER.SetParticleColor(0xFFFF0000);
 						else
-							SHADERMANAGER.SetParticleColor( 0xFF0000FF);
+							SHADERMANAGER.SetParticleColor(0xFF0000FF);
 						SHADERMANAGER.SetDefaultTexture(0);
 					}
 					else
 					{
-						const TTerrainTexture & rTexture = m_TextureSet.GetTexture(j);
+						const TTerrainTexture& rTexture = m_TextureSet.GetTexture(j);
 
 						MatrixMultiply(&matSplatColorTexTransform, &m_matViewInverse, &rTexture.m_matTransform);
 						SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matSplatColorTexTransform);
 
-							SHADERMANAGER.SetMaterialParams(rTexture.m_matTransform._11, rTexture.m_matTransform._22, 0.0f, 0.0f);
+						SHADERMANAGER.SetMaterialParams(rTexture.m_matTransform._11, rTexture.m_matTransform._22, 0.0f, 0.0f);
 
 						SHADERMANAGER.SetShaderResource(0, rTexture.pd3dTexture);
 					}
@@ -508,7 +487,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 					SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
 					if (dwTextureCount < 71)
 					{
-						SHADERMANAGER.SetParticleColor( dwParticleColorForTextureBalance);
+						SHADERMANAGER.SetParticleColor(dwParticleColorForTextureBalance);
 					}
 				}
 
@@ -557,7 +536,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 		for (DWORD j = 1; j < pTerrain->GetNumTextures(); ++j)
 		{
-			TTerainSplat & rSplat = rTerrainSplatPatch.Splats[j];
+			TTerainSplat& rSplat = rTerrainSplatPatch.Splats[j];
 
 			if (!rSplat.Active)
 				continue;
@@ -567,28 +546,28 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 			DWORD dwParticleColor;
 
-			if (nRenderTextureCount>=TextureCountThreshold)
+			if (nRenderTextureCount >= TextureCountThreshold)
 			{
-					dwParticleColor = SHADERMANAGER.GetParticleColor();
-				SHADERMANAGER.SetParticleColor( dwTFactor);
+				dwParticleColor = SHADERMANAGER.GetParticleColor();
+				SHADERMANAGER.SetParticleColor(dwTFactor);
 				SHADERMANAGER.SetDefaultTexture(0);
 			}
 			else
 			{
-				const TTerrainTexture & rTexture = m_TextureSet.GetTexture(j);
+				const TTerrainTexture& rTexture = m_TextureSet.GetTexture(j);
 
 				MatrixMultiply(&matSplatColorTexTransform, &m_matViewInverse, &rTexture.m_matTransform);
 				SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matSplatColorTexTransform);
 
-						SHADERMANAGER.SetMaterialParams(rTexture.m_matTransform._11, rTexture.m_matTransform._22, 0.0f, 0.0f);
+				SHADERMANAGER.SetMaterialParams(rTexture.m_matTransform._11, rTexture.m_matTransform._22, 0.0f, 0.0f);
 
 				SHADERMANAGER.SetShaderResource(0, rTexture.pd3dTexture);
 			}
 			SHADERMANAGER.SetShaderResource(1, rSplat.pd3dTexture);
 			SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
-			if (nRenderTextureCount>=TextureCountThreshold)
+			if (nRenderTextureCount >= TextureCountThreshold)
 			{
-				SHADERMANAGER.SetParticleColor( dwParticleColor);
+				SHADERMANAGER.SetParticleColor(dwParticleColor);
 			}
 
 			++nRenderTextureCount;
@@ -605,10 +584,10 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 
 #else
 
-	bool isFirst=true;
+	bool isFirst = true;
 	for (DWORD j = 1; j < pTerrain->GetNumTextures(); ++j)
 	{
-		TTerainSplat & rSplat = rTerrainSplatPatch.Splats[j];
+		TTerainSplat& rSplat = rTerrainSplatPatch.Splats[j];
 
 		if (!rSplat.Active)
 			continue;
@@ -616,7 +595,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 		if (rTerrainSplatPatch.PatchTileCount[sPatchNum][j] == 0)
 			continue;
 
-		const TTerrainTexture & rTexture = m_TextureSet.GetTexture(j);
+		const TTerrainTexture& rTexture = m_TextureSet.GetTexture(j);
 
 		MatrixMultiply(&matSplatColorTexTransform, &m_matViewInverse, &rTexture.m_matTransform);
 		SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matSplatColorTexTransform);
@@ -644,6 +623,8 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 #ifdef WORLD_EDITOR
 	if (m_bDrawShadow && m_bDrawChrShadow && m_lpCharacterShadowMapTexture)
 	{
+		SHADERMANAGER.PushState();
+
 		SHADERMANAGER.SetLightingEnabled(true);
 
 		SHADERMANAGER.SetFogColor(0xFFFFFFFF);
@@ -666,7 +647,7 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 		SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 1.0f, 0.0f);
 
 		SHADERMANAGER.SetShadowTextures(m_lpShadowMapSRV[3], m_lpShadowMapSRV[0]);
-			SHADERMANAGER.SetShadowMidFarTextures(m_lpShadowMapSRV[1], m_lpShadowMapSRV[2]);
+		SHADERMANAGER.SetShadowMidFarTextures(m_lpShadowMapSRV[1], m_lpShadowMapSRV[2]);
 
 		SHADERMANAGER.CommitChanges();
 
@@ -674,39 +655,25 @@ void CMapOutdoor::__HardwareTransformPatch_RenderPatchSplat(long patchnum, WORD 
 		SHADERMANAGER.DrawIndexed(ePrimitiveType, 0, m_iPatchTerrainVertexCount, 0, wPrimitiveCount);
 		++m_iRenderedSplatNum;
 
-		SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-		SHADERMANAGER.SetShaderResource(1, NULL);
-		SHADERMANAGER.SetShadowTextures(nullptr, nullptr);
-			SHADERMANAGER.SetShadowMidFarTextures(nullptr, nullptr);
-
-		SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_WRAP);
-		SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_WRAP);
-		SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-		SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
-
-		SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-		SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
-		SHADERMANAGER.SetFogColor(dwFogColor);
-
-		SHADERMANAGER.SetLightingEnabled(false);
+		SHADERMANAGER.PopState();
 	}
 #endif
 	++m_iRenderedPatchNum;
 
-	int iCurRenderedSplatNum=m_iRenderedSplatNum-iPrevRenderedSplatNum;
+	int iCurRenderedSplatNum = m_iRenderedSplatNum - iPrevRenderedSplatNum;
 
-	m_iRenderedSplatNumSqSum+=iCurRenderedSplatNum*iCurRenderedSplatNum;
+	m_iRenderedSplatNumSqSum += iCurRenderedSplatNum * iCurRenderedSplatNum;
 }
 
 void CMapOutdoor::__HardwareTransformPatch_RenderPatchNone(long patchnum, WORD wPrimitiveCount, EPrimitiveTopology ePrimitiveType)
 {
-	assert(NULL!=m_pTerrainPatchProxyList && "__HardwareTransformPatch_RenderPatchNone");
-	CTerrainPatchProxy * pTerrainPatchProxy = &m_pTerrainPatchProxyList[patchnum];
+	assert(NULL != m_pTerrainPatchProxyList && "__HardwareTransformPatch_RenderPatchNone");
+	CTerrainPatchProxy* pTerrainPatchProxy = &m_pTerrainPatchProxyList[patchnum];
 
 	if (!pTerrainPatchProxy->isUsed())
 		return;
 
-	CGraphicVertexBuffer* pkVB=pTerrainPatchProxy->HardwareTransformPatch_GetVertexBufferPtr();
+	CGraphicVertexBuffer* pkVB = pTerrainPatchProxy->HardwareTransformPatch_GetVertexBufferPtr();
 	if (!pkVB)
 		return;
 
@@ -738,6 +705,7 @@ void CMapOutdoor::__RenderTerrainShadowPass(long patchnum, WORD wPrimitiveCount,
 void CMapOutdoor::__HardwareTransformPatch_RenderBatchedByTexture(
 	const std::vector<SPatchRenderInfo>& patches)
 {
+	SHADERMANAGER.PushState();
 	// Extended texture/patch pair with LOD and fog info
 	struct STexturePatchPair
 	{
@@ -923,9 +891,5 @@ void CMapOutdoor::__HardwareTransformPatch_RenderBatchedByTexture(
 		}
 	}
 
-	// Restore fog state after terrain patch rendering
-	SHADERMANAGER.SetFogEnabled(bFogEnable);
-
-	if (!bBlendOn)
-		SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.PopState();
 }

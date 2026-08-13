@@ -126,18 +126,6 @@ bool					CGraphicBase::ms_isLowTextureMemory = false;
 bool					CGraphicBase::ms_isHighTextureMemory = false;
 DWORD					CGraphicBase::ms_faceCount = 0;
 
-/*
-std::vector<TIndex>		CGraphicBase::ms_lineIdxVector;
-std::vector<TIndex>		CGraphicBase::ms_lineTriIdxVector;
-std::vector<TIndex>		CGraphicBase::ms_lineRectIdxVector;
-std::vector<TIndex>		CGraphicBase::ms_lineCubeIdxVector;
-
-std::vector<TIndex>		CGraphicBase::ms_fillTriIdxVector;
-std::vector<TIndex>		CGraphicBase::ms_fillRectIdxVector;
-std::vector<TIndex>		CGraphicBase::ms_fillCubeIdxVector;
-*/
-
-
 #ifdef ENABLE_FIX_MOBS_LAG
 ID3D11Buffer* CGraphicBase::m_tinyPdtVertexBuffer = nullptr;
 ID3D11Buffer* CGraphicBase::m_smallPdtVertexBuffer = nullptr;

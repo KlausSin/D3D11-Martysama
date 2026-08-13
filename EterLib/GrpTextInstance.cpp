@@ -928,8 +928,9 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 			break;
 	}
 
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
+	SHADERMANAGER.PushState();
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 	bool bFogEnable = SHADERMANAGER.GetFogEnabled();
 	bool bLighting = SHADERMANAGER.GetLightingEnabled();
 	SHADERMANAGER.SetFogEnabled(false);
@@ -1546,8 +1547,7 @@ void CGraphicTextInstance::Render(RECT * pClipRect)
 		}
 	}
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+	SHADERMANAGER.PopState();
 
 	SHADERMANAGER.SetFogEnabled(bFogEnable);
 	SHADERMANAGER.SetLightingEnabled(bLighting);

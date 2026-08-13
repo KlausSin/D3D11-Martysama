@@ -1144,11 +1144,13 @@ void CMapOutdoor::InitializeFog()
 
 void CMapOutdoor::SaveAlphaFogOperation()
 {
+	SHADERMANAGER.PushState();
+
 	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
 	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
-
 	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &m_matAlphaFogTexture);
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+
 	CGraphicTexture* pFogTex = m_AlphaFogImageInstance.GetTexturePointer();
 	if (pFogTex)
 		SHADERMANAGER.SetShaderResource(1, pFogTex->GetD3DTexture());
@@ -1156,7 +1158,7 @@ void CMapOutdoor::SaveAlphaFogOperation()
 
 void CMapOutdoor::RestoreAlphaFogOperation()
 {
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
+	SHADERMANAGER.PopState();
 }
 
 void CMapOutdoor::SetDrawShadow(bool bDrawShadow)

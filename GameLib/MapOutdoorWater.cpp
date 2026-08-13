@@ -28,98 +28,70 @@ void CMapOutdoor::UnloadWaterTexture()
 
 void CMapOutdoor::RenderWater()
 {
-	if (m_PatchVector.empty())
+	if (m_PatchVector.empty() || !IsVisiblePart(PART_WATER))
 		return;
 
-	if (!IsVisiblePart(PART_WATER))
-		return;
+	SHADERMANAGER.PushState();
 
-	//////////////////////////////////////////////////////////////////////////
-	// RenderState
 	Matrix matTexTransformWater;
 
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 
 	const DWORD dwWaterTime = (DWORD)DX::StepTimer::instance().GetTotalMillieSeconds();
-	CGraphicTexture * pWaterTexture = m_WaterInstances[(dwWaterTime / 70) % 30].GetTexturePointer();
+	CGraphicTexture* pWaterTexture = m_WaterInstances[(dwWaterTime / 70) % 30].GetTexturePointer();
 	if (pWaterTexture)
 		SHADERMANAGER.SetShaderResource(0, pWaterTexture->GetD3DTexture());
 
 	MatrixScaling(&matTexTransformWater, m_fWaterTexCoordBase, -m_fWaterTexCoordBase, 0.0f);
-	SHADERMANAGER.SaveTransform(MATRIX_TEXTURE0, &matTexTransformWater);
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &matTexTransformWater);
 
-	SHADERMANAGER.SaveInputLayout(INPUT_LAYOUT_PD);
-
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MIPFILTER, FILTER_LINEAR);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_WRAP);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_WRAP);
-
-
-	SHADERMANAGER.SetShaderResource(1,NULL);
+	SHADERMANAGER.SetInputLayout(INPUT_LAYOUT_PD);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MIPFILTER, FILTER_LINEAR);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_WRAP);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_WRAP);
+	SHADERMANAGER.SetShaderResource(1, nullptr);
 
 	SHADERMANAGER.BeginWater();
 
-
-	// RenderState
-	//////////////////////////////////////////////////////////////////////////
-
-	static float s_fWaterHeightCurrent = 0;
-	static float s_fWaterHeightBegin = 0;
-	static float s_fWaterHeightEnd = 0;
+	static float s_fWaterHeightCurrent = 0.0f;
+	static float s_fWaterHeightBegin = 0.0f;
+	static float s_fWaterHeightEnd = 0.0f;
 	static DWORD s_dwLastHeightChangeTime = DX::StepTimer::instance().GetTotalMillieSeconds();
 	static DWORD s_dwBlendtime = 300;
 
-	if ((DX::StepTimer::instance().GetTotalMillieSeconds() - s_dwLastHeightChangeTime) > s_dwBlendtime)
+	DWORD now = DX::StepTimer::instance().GetTotalMillieSeconds();
+
+	if (now - s_dwLastHeightChangeTime > s_dwBlendtime)
 	{
 		s_dwBlendtime = random_range(1000, 3000);
-
-		if (s_fWaterHeightEnd == 0)
-			s_fWaterHeightEnd = -random_range(0, 15);
-		else
-			s_fWaterHeightEnd = 0;
-
+		s_fWaterHeightEnd = (s_fWaterHeightEnd == 0.0f) ? -random_range(0, 15) : 0.0f;
 		s_fWaterHeightBegin = s_fWaterHeightCurrent;
-		s_dwLastHeightChangeTime = DX::StepTimer::instance().GetTotalMillieSeconds();
+		s_dwLastHeightChangeTime = now;
 	}
 
-	s_fWaterHeightCurrent = s_fWaterHeightBegin + (s_fWaterHeightEnd - s_fWaterHeightBegin) * (float)((DX::StepTimer::instance().GetTotalMillieSeconds() - s_dwLastHeightChangeTime) / (float)s_dwBlendtime);
-	m_matWorldForCommonUse._43 = s_fWaterHeightCurrent;
+	s_fWaterHeightCurrent = s_fWaterHeightBegin +
+		(s_fWaterHeightEnd - s_fWaterHeightBegin) *
+		(float)(now - s_dwLastHeightChangeTime) / (float)s_dwBlendtime;
 
 	m_matWorldForCommonUse._41 = 0.0f;
 	m_matWorldForCommonUse._42 = 0.0f;
-	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorldForCommonUse);
+	m_matWorldForCommonUse._43 = s_fWaterHeightCurrent;
 
+	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorldForCommonUse);
 	SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	SHADERMANAGER.CommitChanges();
 
-	std::vector<std::pair<float, long> >::iterator i;
-	for (i = m_PatchVector.begin(); i != m_PatchVector.end(); ++i)
-	{
-		DrawWater(i->second);
-	}
+	for (const auto& patch : m_PatchVector)
+		DrawWater(patch.second);
 
 	m_matWorldForCommonUse._43 = 0.0f;
 
-
 	SHADERMANAGER.End();
-
-	//////////////////////////////////////////////////////////////////////////
-	// RenderState
-	SHADERMANAGER.RestoreInputLayout();
-	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE0);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MAGFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MIPFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSU);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSV);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+	SHADERMANAGER.PopState();
 }
 
 void CMapOutdoor::DrawWater(long patchnum)

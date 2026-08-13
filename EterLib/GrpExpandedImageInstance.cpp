@@ -32,11 +32,11 @@ void CGraphicExpandedImageInstance::OnRender(RECT* pClipRect)
 void CGraphicExpandedImageInstance::OnRender()
 #endif
 {
-	CGraphicImage * pImage = m_roImage.GetPointer();
+	CGraphicImage* pImage = m_roImage.GetPointer();
 	if (!pImage)
 		return;
 
-	CGraphicTexture * pTexture = pImage->GetTexturePointer();
+	CGraphicTexture* pTexture = pImage->GetTexturePointer();
 	if (!pTexture)
 		return;
 
@@ -45,33 +45,33 @@ void CGraphicExpandedImageInstance::OnRender()
 	float texReverseHeight = 1.0f / float(pTexture->GetHeight());
 	float su = (c_rRect.left - m_RenderingRect.left) * texReverseWidth;
 	float sv = (c_rRect.top - m_RenderingRect.top) * texReverseHeight;
-	float eu = (c_rRect.left + m_RenderingRect.right + (c_rRect.right-c_rRect.left)) * texReverseWidth;
-	float ev = (c_rRect.top + m_RenderingRect.bottom + (c_rRect.bottom-c_rRect.top)) * texReverseHeight;
+	float eu = (c_rRect.left + m_RenderingRect.right + (c_rRect.right - c_rRect.left)) * texReverseWidth;
+	float ev = (c_rRect.top + m_RenderingRect.bottom + (c_rRect.bottom - c_rRect.top)) * texReverseHeight;
 
 	TPDTVertex vertices[4];
-	vertices[0].position.x	= m_v2Position.x;
-	vertices[0].position.y	= m_v2Position.y;
-	vertices[0].position.z	= m_fDepth;
-	vertices[0].texCoord	= TTextureCoordinate(su, sv);
-	vertices[0].diffuse		= m_DiffuseColor;
+	vertices[0].position.x = m_v2Position.x;
+	vertices[0].position.y = m_v2Position.y;
+	vertices[0].position.z = m_fDepth;
+	vertices[0].texCoord = TTextureCoordinate(su, sv);
+	vertices[0].diffuse = m_DiffuseColor;
 
-	vertices[1].position.x	= m_v2Position.x;
-	vertices[1].position.y	= m_v2Position.y;
-	vertices[1].position.z	= m_fDepth;
-	vertices[1].texCoord	= TTextureCoordinate(eu, sv);
-	vertices[1].diffuse		= m_DiffuseColor;
+	vertices[1].position.x = m_v2Position.x;
+	vertices[1].position.y = m_v2Position.y;
+	vertices[1].position.z = m_fDepth;
+	vertices[1].texCoord = TTextureCoordinate(eu, sv);
+	vertices[1].diffuse = m_DiffuseColor;
 
-	vertices[2].position.x	= m_v2Position.x;
-	vertices[2].position.y	= m_v2Position.y;
-	vertices[2].position.z	= m_fDepth;
-	vertices[2].texCoord	= TTextureCoordinate(su, ev);
-	vertices[2].diffuse		= m_DiffuseColor;
+	vertices[2].position.x = m_v2Position.x;
+	vertices[2].position.y = m_v2Position.y;
+	vertices[2].position.z = m_fDepth;
+	vertices[2].texCoord = TTextureCoordinate(su, ev);
+	vertices[2].diffuse = m_DiffuseColor;
 
-	vertices[3].position.x	= m_v2Position.x;
-	vertices[3].position.y	= m_v2Position.y;
-	vertices[3].position.z	= m_fDepth;
-	vertices[3].texCoord	= TTextureCoordinate(eu, ev);
-	vertices[3].diffuse		= m_DiffuseColor;
+	vertices[3].position.x = m_v2Position.x;
+	vertices[3].position.y = m_v2Position.y;
+	vertices[3].position.z = m_fDepth;
+	vertices[3].texCoord = TTextureCoordinate(eu, ev);
+	vertices[3].diffuse = m_DiffuseColor;
 
 	if (0.0f == m_fRotation)
 	{
@@ -92,8 +92,8 @@ void CGraphicExpandedImageInstance::OnRender()
 	}
 	else
 	{
-		float fimgHalfWidth = float(pImage->GetWidth())/2.0f * m_v2Scale.x;
-		float fimgHalfHeight = float(pImage->GetHeight())/2.0f * m_v2Scale.y;
+		float fimgHalfWidth = float(pImage->GetWidth()) / 2.0f * m_v2Scale.x;
+		float fimgHalfHeight = float(pImage->GetHeight()) / 2.0f * m_v2Scale.y;
 
 		for (int i = 0; i < 4; ++i)
 		{
@@ -102,26 +102,29 @@ void CGraphicExpandedImageInstance::OnRender()
 		}
 
 		float fRadian = ToRadian(m_fRotation);
-		vertices[0].position.x += (-fimgHalfWidth*cosf(fRadian)) - (-fimgHalfHeight*sinf(fRadian));
-		vertices[0].position.y += (-fimgHalfWidth*sinf(fRadian)) + (-fimgHalfHeight*cosf(fRadian));
-		vertices[1].position.x += (+fimgHalfWidth*cosf(fRadian)) - (-fimgHalfHeight*sinf(fRadian));
-		vertices[1].position.y += (+fimgHalfWidth*sinf(fRadian)) + (-fimgHalfHeight*cosf(fRadian));
-		vertices[2].position.x += (-fimgHalfWidth*cosf(fRadian)) - (+fimgHalfHeight*sinf(fRadian));
-		vertices[2].position.y += (-fimgHalfWidth*sinf(fRadian)) + (+fimgHalfHeight*cosf(fRadian));
-		vertices[3].position.x += (+fimgHalfWidth*cosf(fRadian)) - (+fimgHalfHeight*sinf(fRadian));
-		vertices[3].position.y += (+fimgHalfWidth*sinf(fRadian)) + (+fimgHalfHeight*cosf(fRadian));
+		vertices[0].position.x += (-fimgHalfWidth * cosf(fRadian)) - (-fimgHalfHeight * sinf(fRadian));
+		vertices[0].position.y += (-fimgHalfWidth * sinf(fRadian)) + (-fimgHalfHeight * cosf(fRadian));
+		vertices[1].position.x += (+fimgHalfWidth * cosf(fRadian)) - (-fimgHalfHeight * sinf(fRadian));
+		vertices[1].position.y += (+fimgHalfWidth * sinf(fRadian)) + (-fimgHalfHeight * cosf(fRadian));
+		vertices[2].position.x += (-fimgHalfWidth * cosf(fRadian)) - (+fimgHalfHeight * sinf(fRadian));
+		vertices[2].position.y += (-fimgHalfWidth * sinf(fRadian)) + (+fimgHalfHeight * cosf(fRadian));
+		vertices[3].position.x += (+fimgHalfWidth * cosf(fRadian)) - (+fimgHalfHeight * sinf(fRadian));
+		vertices[3].position.y += (+fimgHalfWidth * sinf(fRadian)) + (+fimgHalfHeight * cosf(fRadian));
 	}
+
+	SHADERMANAGER.PushState();
 
 	switch (m_iRenderingMode)
 	{
 		case RENDERING_MODE_SCREEN:
 		case RENDERING_MODE_COLOR_DODGE:
-			SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_INVDESTCOLOR);
-			SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_ONE);
+			SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_INVDESTCOLOR);
+			SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_ONE);
 			break;
+
 		case RENDERING_MODE_MODULATE:
-			SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_ZERO);
-			SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_SRCCOLOR);
+			SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_ZERO);
+			SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_SRCCOLOR);
 			break;
 	}
 
@@ -139,17 +142,8 @@ void CGraphicExpandedImageInstance::OnRender()
 		SHADERMANAGER.SetShaderResource(1, NULL);
 		SHADERMANAGER.DrawIndexed(TOPOLOGY_TRIANGLELIST, 0, 4, 0, 2);
 	}
-	/////////////////////////////////////////////////////////////
 
-	switch (m_iRenderingMode)
-	{
-		case RENDERING_MODE_SCREEN:
-		case RENDERING_MODE_COLOR_DODGE:
-		case RENDERING_MODE_MODULATE:
-			SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-			SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
-			break;
-	}
+	SHADERMANAGER.PopState();
 	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_FRONT);
 }
 

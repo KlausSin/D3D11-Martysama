@@ -248,13 +248,8 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 {
 	CPythonBackground& rkBG = CPythonBackground::Instance();
-	if (!rkBG.IsMapOutdoor())
-		return;
 
-	if (!m_bShow)
-		return;
-
-	if (!rkBG.IsMapReady())
+	if (!rkBG.IsMapOutdoor() || !m_bShow || !rkBG.IsMapReady())
 		return;
 
 	if (m_fScreenX != fScreenX || m_fScreenY != fScreenY)
@@ -264,152 +259,125 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 		__SetPosition();
 	}
 
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MIPFILTER, FILTER_POINT);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MINFILTER, FILTER_POINT);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MAGFILTER, FILTER_POINT);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	SHADERMANAGER.PushState();
 
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	// Minimap terrain
+	SHADERMANAGER.PushState();
 
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MIPFILTER, FILTER_POINT);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_POINT);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_POINT);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
 
-	DWORD dwSavedParticleColor1 = SHADERMANAGER.GetParticleColor();
 	SHADERMANAGER.SetParticleColor(0xFF000000);
-
 	SHADERMANAGER.SetShaderResource(1, m_MiniMapFilterGraphicImageInstance.GetTexturePointer()->GetD3DTexture());
 	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE1, &m_matMiniMapCover);
 	SHADERMANAGER.SetTextureMatrix(1, &m_matMiniMapCover);
 
 	SHADERMANAGER.SetInputLayout(INPUT_LAYOUT_PDT);
-	SHADERMANAGER.SetVertexBuffer(0, m_VertexBuffer.GetD3DVertexBuffer(), sizeof(TPDTVertex));  // PDT format vertex
+	SHADERMANAGER.SetVertexBuffer(0, m_VertexBuffer.GetD3DVertexBuffer(), sizeof(TPDTVertex));
 	SHADERMANAGER.SetIndexBuffer(m_IndexBuffer.GetD3DIndexBuffer());
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorld);
 
-	// Bind UI shader before rendering
 	SHADERMANAGER.BeginUI();
 	SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 1.0f);
 	SHADERMANAGER.CommitChanges();
 
 	for (BYTE byTerrainNum = 0; byTerrainNum < AROUND_AREA_NUM; ++byTerrainNum)
 	{
-		ID3D11ShaderResourceView* pMiniMapTexture = m_lpMiniMapTexture[byTerrainNum];
-		SHADERMANAGER.SetShaderResource(0, pMiniMapTexture);
-		if (pMiniMapTexture)
-		{
-			SHADERMANAGER.DrawIndexed(TOPOLOGY_TRIANGLELIST, byTerrainNum * 4, 4, byTerrainNum * 6, 2);
-		}
-		else
-		{
-					SHADERMANAGER.DrawIndexed(TOPOLOGY_TRIANGLELIST, byTerrainNum * 4, 4, byTerrainNum * 6, 2);
-		}
+		ID3D11ShaderResourceView* pTexture = m_lpMiniMapTexture[byTerrainNum];
+		SHADERMANAGER.SetShaderResource(0, pTexture);
+		SHADERMANAGER.DrawIndexed(TOPOLOGY_TRIANGLELIST, byTerrainNum * 4, 4, byTerrainNum * 6, 2);
 	}
 
-	SHADERMANAGER.SetParticleColor(dwSavedParticleColor1);
+	SHADERMANAGER.PopState();
 
-	SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-	SHADERMANAGER.SetShaderResource(1, NULL);
-
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSU);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSV);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
-
+	// Marks
 	SetDiffuseOperation();
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matIdentity);
-
-	DWORD dwSavedParticleColor2 = SHADERMANAGER.GetParticleColor();
 	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
-	TInstancePositionVectorIterator aIterator;
+	TInstancePositionVectorIterator it;
 
 	if (m_fScale >= 2.0f)
 	{
-		// Monster
-		const Color & c_rMobColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_MOB);
-		aIterator = m_MonsterPositionVector.begin();
-		while (aIterator != m_MonsterPositionVector.end())
+		const Color& mobColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_MOB);
+
+		for (it = m_MonsterPositionVector.begin(); it != m_MonsterPositionVector.end(); ++it)
 		{
-			TMarkPosition& rPosition = *aIterator;
-			m_WhiteMark.SetPosition(rPosition.m_fX, rPosition.m_fY);
-			m_WhiteMark.SetDiffuseColor(c_rMobColor.r, c_rMobColor.g, c_rMobColor.b, c_rMobColor.a);
+			TMarkPosition& pos = *it;
+			m_WhiteMark.SetPosition(pos.m_fX, pos.m_fY);
+			m_WhiteMark.SetDiffuseColor(mobColor.r, mobColor.g, mobColor.b, mobColor.a);
 			m_WhiteMark.Render();
-			++aIterator;
 		}
 
-		// Other PC
-		aIterator = m_OtherPCPositionVector.begin();
-		while (aIterator != m_OtherPCPositionVector.end())
+		for (it = m_OtherPCPositionVector.begin(); it != m_OtherPCPositionVector.end(); ++it)
 		{
-			TMarkPosition& rPosition = *aIterator;
-			const Color & c_rPCColor = CInstanceBase::GetIndexedNameColor(rPosition.m_eNameColor);
-			m_WhiteMark.SetPosition(rPosition.m_fX, rPosition.m_fY);
-			m_WhiteMark.SetDiffuseColor(c_rPCColor.r, c_rPCColor.g, c_rPCColor.b, c_rPCColor.a);
+			TMarkPosition& pos = *it;
+			const Color& color = CInstanceBase::GetIndexedNameColor(pos.m_eNameColor);
+
+			m_WhiteMark.SetPosition(pos.m_fX, pos.m_fY);
+			m_WhiteMark.SetDiffuseColor(color.r, color.g, color.b, color.a);
 			m_WhiteMark.Render();
-			++aIterator;
 		}
 
-		// Party PC
 		if (!m_PartyPCPositionVector.empty())
 		{
-			const float now = DX::StepTimer::Instance().GetTotalSeconds();
+			float now = DX::StepTimer::Instance().GetTotalSeconds();
 			float v = (1.0f + std::sin(now * 6.0f)) / 5.0f + 0.6f;
-			Color c(CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_PARTY));//(m_MarkTypeToColorMap[TYPE_PARTY]);
-			Color d(v, v, v, 1);
+
+			Color c(CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_PARTY));
+			Color d(v, v, v, 1.0f);
 			ColorModulate(&c, &c, &d);
-			aIterator = m_PartyPCPositionVector.begin();
-			while (aIterator != m_PartyPCPositionVector.end())
+
+			for (it = m_PartyPCPositionVector.begin(); it != m_PartyPCPositionVector.end(); ++it)
 			{
-				TMarkPosition& rPosition = *aIterator;
-				m_WhiteMark.SetPosition(rPosition.m_fX, rPosition.m_fY);
+				TMarkPosition& pos = *it;
+				m_WhiteMark.SetPosition(pos.m_fX, pos.m_fY);
 				m_WhiteMark.SetDiffuseColor(c.r, c.g, c.b, c.a);
 				m_WhiteMark.Render();
-				++aIterator;
 			}
 		}
 	}
 
-	// NPC
-	const Color & c_rNPCColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_NPC);
-	aIterator = m_NPCPositionVector.begin();
-	while (aIterator != m_NPCPositionVector.end())
+	const Color& npcColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_NPC);
+
+	for (it = m_NPCPositionVector.begin(); it != m_NPCPositionVector.end(); ++it)
 	{
-		TMarkPosition& rPosition = *aIterator;
-		m_WhiteMark.SetPosition(rPosition.m_fX, rPosition.m_fY);
-		m_WhiteMark.SetDiffuseColor(c_rNPCColor.r, c_rNPCColor.g, c_rNPCColor.b, c_rNPCColor.a);
+		TMarkPosition& pos = *it;
+		m_WhiteMark.SetPosition(pos.m_fX, pos.m_fY);
+		m_WhiteMark.SetDiffuseColor(npcColor.r, npcColor.g, npcColor.b, npcColor.a);
 		m_WhiteMark.Render();
-		++aIterator;
 	}
 
-	// Warp
-	const Color & c_rWarpColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WARP);
-	aIterator = m_WarpPositionVector.begin();
-	while (aIterator != m_WarpPositionVector.end())
+	const Color& warpColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WARP);
+
+	for (it = m_WarpPositionVector.begin(); it != m_WarpPositionVector.end(); ++it)
 	{
-		TMarkPosition& rPosition = *aIterator;
-		m_WhiteMark.SetPosition(rPosition.m_fX, rPosition.m_fY);
-		m_WhiteMark.SetDiffuseColor(c_rWarpColor.r, c_rWarpColor.g, c_rWarpColor.b, c_rWarpColor.a);
+		TMarkPosition& pos = *it;
+		m_WhiteMark.SetPosition(pos.m_fX, pos.m_fY);
+		m_WhiteMark.SetDiffuseColor(warpColor.r, warpColor.g, warpColor.b, warpColor.a);
 		m_WhiteMark.Render();
-		++aIterator;
 	}
 
-	SHADERMANAGER.SetParticleColor(dwSavedParticleColor2);
+	// Player / waypoint / camera marks use linear filtering only
+	SHADERMANAGER.PushState();
 
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MIPFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MAGFILTER);
-
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
 
 	CInstanceBase* pkInst = CPythonCharacterManager::Instance().GetMainInstancePtr();
 
 	if (pkInst)
 	{
-		float fRotation;
-		fRotation = (540.0f - pkInst->GetRotation());
+		float fRotation = 540.0f - pkInst->GetRotation();
+
 		while (fRotation > 360.0f)
 			fRotation -= 360.0f;
+
 		while (fRotation < 0.0f)
 			fRotation += 360.0f;
 
@@ -417,35 +385,27 @@ void CPythonMiniMap::Render(float fScreenX, float fScreenY)
 		m_PlayerMark.Render();
 	}
 
-	// Target
+	for (auto& mark : m_AtlasWayPointInfoVector)
 	{
-		TAtlasMarkInfoVector::iterator itor = m_AtlasWayPointInfoVector.begin();
-		for (; itor != m_AtlasWayPointInfoVector.end(); ++itor)
-		{
-			TAtlasMarkInfo& rAtlasMarkInfo = *itor;
+		if (mark.m_byType != TYPE_TARGET)
+			continue;
 
-			if (TYPE_TARGET != rAtlasMarkInfo.m_byType)
-				continue;
-			if (rAtlasMarkInfo.m_fMiniMapX <= 0.0f)
-				continue;
-			if (rAtlasMarkInfo.m_fMiniMapY <= 0.0f)
-				continue;
+		if (mark.m_fMiniMapX <= 0.0f || mark.m_fMiniMapY <= 0.0f)
+			continue;
 
-			__RenderTargetMark(rAtlasMarkInfo.m_fMiniMapX, rAtlasMarkInfo.m_fMiniMapY);
-		}
+		__RenderTargetMark(mark.m_fMiniMapX, mark.m_fMiniMapY);
 	}
 
 	CCamera* pkCmrCur = CCameraManager::Instance().GetCurrentCamera();
-
 	if (pkCmrCur)
 	{
 		m_MiniMapCameraraphicImageInstance.SetRotation(pkCmrCur->GetRoll());
 		m_MiniMapCameraraphicImageInstance.Render();
 	}
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MAGFILTER);
-}
 
+	SHADERMANAGER.PopState();
+	SHADERMANAGER.PopState();
+}
 void CPythonMiniMap::SetScale(float fScale)
 {
 	if (fScale >= 4.0f)
@@ -963,85 +923,74 @@ void CPythonMiniMap::RenderAtlas(float fScreenX, float fScreenY)
 		m_fAtlasScreenY = fScreenY;
 	}
 
+	SHADERMANAGER.PushState();
+
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorldAtlas);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MINFILTER, FILTER_POINT);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MAGFILTER, FILTER_POINT);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_POINT);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_POINT);
+
 	m_AtlasImageInstance.Render();
 
-	DWORD dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
 	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 
-	const Color & c_rAtlasNPCColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_NPC);
-	m_AtlasMarkInfoVectorIterator = m_AtlasNPCInfoVector.begin();
-	while (m_AtlasMarkInfoVectorIterator != m_AtlasNPCInfoVector.end())
+	const Color& c_rAtlasNPCColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_NPC);
+	for (m_AtlasMarkInfoVectorIterator = m_AtlasNPCInfoVector.begin();
+		m_AtlasMarkInfoVectorIterator != m_AtlasNPCInfoVector.end();
+		++m_AtlasMarkInfoVectorIterator)
 	{
 		TAtlasMarkInfo& rAtlasMarkInfo = *m_AtlasMarkInfoVectorIterator;
+
 		m_WhiteMark.SetPosition(rAtlasMarkInfo.m_fScreenX, rAtlasMarkInfo.m_fScreenY);
 		m_WhiteMark.SetDiffuseColor(c_rAtlasNPCColor.r, c_rAtlasNPCColor.g, c_rAtlasNPCColor.b, c_rAtlasNPCColor.a);
 		m_WhiteMark.Render();
-		++m_AtlasMarkInfoVectorIterator;
 	}
 
-	const Color & c_rAtlasWarpColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WARP);
-	m_AtlasMarkInfoVectorIterator = m_AtlasWarpInfoVector.begin();
-	while (m_AtlasMarkInfoVectorIterator != m_AtlasWarpInfoVector.end())
+	const Color& c_rAtlasWarpColor = CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WARP);
+	for (m_AtlasMarkInfoVectorIterator = m_AtlasWarpInfoVector.begin();
+		m_AtlasMarkInfoVectorIterator != m_AtlasWarpInfoVector.end();
+		++m_AtlasMarkInfoVectorIterator)
 	{
 		TAtlasMarkInfo& rAtlasMarkInfo = *m_AtlasMarkInfoVectorIterator;
+
 		m_WhiteMark.SetPosition(rAtlasMarkInfo.m_fScreenX, rAtlasMarkInfo.m_fScreenY);
 		m_WhiteMark.SetDiffuseColor(c_rAtlasWarpColor.r, c_rAtlasWarpColor.g, c_rAtlasWarpColor.b, c_rAtlasWarpColor.a);
 		m_WhiteMark.Render();
-		++m_AtlasMarkInfoVectorIterator;
 	}
 
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
 	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
-
 	SHADERMANAGER.SetParticleColor(CInstanceBase::GetIndexedNameColor(CInstanceBase::NAMECOLOR_WAYPOINT));
-	m_AtlasMarkInfoVectorIterator = m_AtlasWayPointInfoVector.begin();
-	for (; m_AtlasMarkInfoVectorIterator != m_AtlasWayPointInfoVector.end(); ++m_AtlasMarkInfoVectorIterator)
+
+	for (m_AtlasMarkInfoVectorIterator = m_AtlasWayPointInfoVector.begin();
+		m_AtlasMarkInfoVectorIterator != m_AtlasWayPointInfoVector.end();
+		++m_AtlasMarkInfoVectorIterator)
 	{
 		TAtlasMarkInfo& rAtlasMarkInfo = *m_AtlasMarkInfoVectorIterator;
 
-		if (rAtlasMarkInfo.m_fScreenX <= 0.0f)
-			continue;
-		if (rAtlasMarkInfo.m_fScreenY <= 0.0f)
+		if (rAtlasMarkInfo.m_fScreenX <= 0.0f || rAtlasMarkInfo.m_fScreenY <= 0.0f)
 			continue;
 
-		if (TYPE_TARGET == rAtlasMarkInfo.m_byType)
-		{
+		if (rAtlasMarkInfo.m_byType == TYPE_TARGET)
 			__RenderMiniWayPointMark(rAtlasMarkInfo.m_fScreenX, rAtlasMarkInfo.m_fScreenY);
-		}
 		else
-		{
 			__RenderWayPointMark(rAtlasMarkInfo.m_fScreenX, rAtlasMarkInfo.m_fScreenY);
-		}
 	}
-
-	SHADERMANAGER.SetParticleColor(dwSavedParticleColor);
 
 	if ((ELTimer_GetMSec() / 500) % 2)
 		m_AtlasPlayerMark.Render();
 
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MAGFILTER);
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matIdentity);
 
+	for (auto& rInfo : m_GuildAreaInfoVector)
 	{
-		TGuildAreaInfoVectorIterator itor = m_GuildAreaInfoVector.begin();
-		for (; itor != m_GuildAreaInfoVector.end(); ++itor)
-		{
-			TGuildAreaInfo& rInfo = *itor;
+		m_GuildAreaFlagImageInstance.SetPosition(
+			fScreenX + (rInfo.fsxRender + rInfo.fexRender) / 2.0f - m_GuildAreaFlagImageInstance.GetWidth() / 2,
+			fScreenY + (rInfo.fsyRender + rInfo.feyRender) / 2.0f - m_GuildAreaFlagImageInstance.GetHeight() / 2);
 
-			m_GuildAreaFlagImageInstance.SetPosition(fScreenX + (rInfo.fsxRender + rInfo.fexRender) / 2.0f - m_GuildAreaFlagImageInstance.GetWidth() / 2,
-				fScreenY + (rInfo.fsyRender + rInfo.feyRender) / 2.0f - m_GuildAreaFlagImageInstance.GetHeight() / 2);
-			m_GuildAreaFlagImageInstance.Render();
-
-			//			CScreen::RenderBar2d(fScreenX+rInfo.fsxRender,
-			//								 fScreenY+rInfo.fsyRender,
-			//								 fScreenX+rInfo.fexRender,
-			//								 fScreenY+rInfo.feyRender);
-		}
+		m_GuildAreaFlagImageInstance.Render();
 	}
+
+	SHADERMANAGER.PopState();
 }
 
 bool CPythonMiniMap::GetPickedInstanceInfo(float fScreenX, float fScreenY, std::string& rReturnName, float* pReturnPosX, float* pReturnPosY, DWORD* pdwTextColor)

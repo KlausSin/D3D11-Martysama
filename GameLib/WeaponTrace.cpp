@@ -310,31 +310,27 @@ void CWeaponTrace::Render()
 	if (m_LongTimePointList.size() <= 1)
 		return;
 
+	SHADERMANAGER.PushState();
+
 	Matrix matWorld;
 	MatrixIdentity(&matWorld);
 
-	SHADERMANAGER.SaveTransform(MATRIX_WORLD, &matWorld);
+	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &matWorld);
 	SHADERMANAGER.SetInputLayout(INPUT_LAYOUT_PDT);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
-
-	bool bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 	SHADERMANAGER.SetAlphaTestEnabled(false);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHFUNC, COMPARISON_LESSEQUAL);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
-
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHFUNC, COMPARISON_LESSEQUAL);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
 	SHADERMANAGER.SetLightingEnabled(false);
-	SHADERMANAGER.SetShaderResource(0, (ID3D11ShaderResourceView*)NULL);
-	SHADERMANAGER.SetShaderResource(1, NULL);
+	SHADERMANAGER.SetShaderResource(0, nullptr);
+	SHADERMANAGER.SetShaderResource(1, nullptr);
 
 	if (SHADERMANAGER.IsWeaponTraceCSAvailable())
 	{
-		// ---- CS PATH: CPU tridiagonal solve → GPU spline sampling + vertex generation ----
 		static std::vector<WeaponTraceSplineSegment> s_csSegments;
 		int numSamples = 0;
 
@@ -356,41 +352,20 @@ void CWeaponTrace::Render()
 			SHADERMANAGER.BeginParticlePCT();
 
 			if (SHADERMANAGER.DispatchWeaponTraceCS(s_csSegments.data(), (UINT)n, params))
-			{
 				SHADERMANAGER.DrawWeaponTraceCSOutput((UINT)numSamples);
-			}
 		}
 	}
 	else
 	{
-		if (!BuildVertex())
-			goto cleanup;
-
-		if (m_PDTVertexVector.size() < 4)
-			goto cleanup;
-
-		SHADERMANAGER.BeginUI();
-		SHADERMANAGER.DrawDynamic(TOPOLOGY_TRIANGLESTRIP,
-									 int(m_PDTVertexVector.size() - 2),
-									 &m_PDTVertexVector[0],
-									 sizeof(TPDTVertex));
+		if (BuildVertex() && m_PDTVertexVector.size() >= 4)
+		{
+			SHADERMANAGER.BeginUI();
+			SHADERMANAGER.DrawDynamic(TOPOLOGY_TRIANGLESTRIP, int(m_PDTVertexVector.size() - 2),
+				m_PDTVertexVector.data(), sizeof(TPDTVertex));
+		}
 	}
 
-cleanup:
-	SHADERMANAGER.SetLightingEnabled(true);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHFUNC);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-
-	SHADERMANAGER.SetAlphaTestEnabled(bSavedAlphaTest);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
-
-	SHADERMANAGER.RestoreTransform(MATRIX_WORLD);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+	SHADERMANAGER.PopState();
 }
 
 void CWeaponTrace::UseAlpha()

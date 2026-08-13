@@ -765,22 +765,14 @@ void CSkyBox::Update()
 
 void CSkyBox::Render()
 {
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE,	TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
+	SHADERMANAGER.PushState();
 
-	// Save and set lighting state
-	bool bSavedLighting = SHADERMANAGER.GetLightingEnabled();
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
 	SHADERMANAGER.SetLightingEnabled(false);
-
-	// Save and set fog state
-	bool bSavedFog = SHADERMANAGER.GetFogEnabled();
 	SHADERMANAGER.SetFogEnabled(false);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, FALSE);
-
-
-	SHADERMANAGER.SetShaderResource(1, NULL);
-
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, FALSE);
+	SHADERMANAGER.SetShaderResource(1, nullptr);
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorld);
 
 	if (SHADERMANAGER.IsInitialized())
@@ -792,33 +784,30 @@ void CSkyBox::Render()
 		SHADERMANAGER.CommitChanges();
 	}
 
-	//Render Face
-	if( m_ucRenderMode == CSkyObject::SKY_RENDER_MODE_TEXTURE )
+	if (m_ucRenderMode == CSkyObject::SKY_RENDER_MODE_TEXTURE)
 	{
-		// Tell shader to use texture (vMaterialParams.w = 1.0)
 		SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 1.0f);
 
 		Matrix matTexIdentity;
 		MatrixIdentity(&matTexIdentity);
+
 		SHADERMANAGER.SetTextureMatrix(0, &matTexIdentity);
 		SHADERMANAGER.CommitChanges();
 
-		SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-		SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+		SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+		SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
 
 		for (unsigned int i = 0; i < 6; ++i)
 		{
-			CGraphicImageInstance * pFaceImageInstance = m_GraphicImageInstanceMap[m_Faces[i].m_strFaceTextureFileName];
+			CGraphicImageInstance* pFaceImageInstance =
+				m_GraphicImageInstanceMap[m_Faces[i].m_strFaceTextureFileName];
+
 			if (!pFaceImageInstance)
 				break;
 
-			SHADERMANAGER.SetShaderResource( 0, pFaceImageInstance->GetTextureReference().GetD3DTexture() );
-
+			SHADERMANAGER.SetShaderResource(0, pFaceImageInstance->GetTextureReference().GetD3DTexture());
 			m_Faces[i].Render();
 		}
-
-		SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSU);
-		SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSV);
 	}
 	else
 	{
@@ -827,64 +816,72 @@ void CSkyBox::Render()
 		SHADERMANAGER.CommitChanges();
 
 		for (unsigned int i = 0; i < 6; ++i)
-		{
 			m_Faces[i].Render();
-		}
 	}
 
 	SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
 
 #ifdef ENABLE_CELESTIAL_BODY
 	{
-		SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-		SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-		SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_ONE);
-		SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+		SHADERMANAGER.PushState();
 
-		// Base angle from light direction (starting position)
+		SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+		SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+		SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_ONE);
+		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
+
 		Vector3 vLN = m_vLightDirection;
 		float fLen = sqrtf(vLN.x * vLN.x + vLN.y * vLN.y + vLN.z * vLN.z);
+
 		if (fLen >= 0.001f)
 		{
-			vLN.x /= fLen; vLN.y /= fLen; vLN.z /= fLen;
+			vLN.x /= fLen;
+			vLN.y /= fLen;
+			vLN.z /= fLen;
+
 			float fBaseAngle = atan2f(-vLN.y, -vLN.x);
 
 			DWORD dwTime = DX::StepTimer::instance().GetTotalMillieSeconds();
 			float fTimeSec = (float)dwTime / 1000.0f;
-			const float fOrbitSpeed = 6.2831853f / 1200.0f; // 2*PI / 1200 sec
+			const float fOrbitSpeed = 6.2831853f / 1200.0f;
 			float fTimeAngle = fTimeSec * fOrbitSpeed;
 
 			float fAngle = fBaseAngle + fTimeAngle;
+
 			if (m_bIsNight)
-				fAngle += 3.14159265f; // moon on opposite side
+				fAngle += 3.14159265f;
 
 			float fCosA = cosf(fAngle);
 			float fSinA = sinf(fAngle);
 
 			const float fElevBase = 0.10f;
 			const float fElevAmp = 0.04f;
-			float fBodyZ = fElevBase + fElevAmp * sinf(fTimeAngle * 2.0f);
-
 			const float fBodyDist = 0.88f;
+
+			float fBodyZ = fElevBase + fElevAmp * sinf(fTimeAngle * 2.0f);
 			Vector3 vBodyPos = { fCosA * fBodyDist, fSinA * fBodyDist, fBodyZ };
 
-			// Billboard axes
 			Vector3 vToBody = vBodyPos;
 			Vec3Normalize(&vToBody, &vToBody);
 
 			Vector3 vWorldUp(0.0f, 0.0f, 1.0f);
 			Vector3 vRight, vUp;
+
 			Vec3Cross(&vRight, &vToBody, &vWorldUp);
 			Vec3Normalize(&vRight, &vRight);
 			Vec3Cross(&vUp, &vRight, &vToBody);
 			Vec3Normalize(&vUp, &vUp);
 
-			// Select texture and color based on day/night
-			CGraphicImageInstance* pTexInst = m_bIsNight ? m_pMoonTextureInstance : m_pSunTextureInstance;
+			CGraphicImageInstance* pTexInst =
+				m_bIsNight ? m_pMoonTextureInstance : m_pSunTextureInstance;
+
 			bool bHasTex = false;
+
 			if (pTexInst && !pTexInst->IsEmpty())
 			{
-				ID3D11ShaderResourceView* pSRV = pTexInst->GetTextureReference().GetD3DTexture();
+				ID3D11ShaderResourceView* pSRV =
+					pTexInst->GetTextureReference().GetD3DTexture();
+
 				if (pSRV)
 				{
 					SHADERMANAGER.SetShaderResource(0, pSRV);
@@ -892,34 +889,26 @@ void CSkyBox::Render()
 					bHasTex = true;
 				}
 			}
+
 			if (!bHasTex)
 			{
 				SHADERMANAGER.SetDefaultTexture(0);
 				SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
 			}
 
-			// Moon: alpha blend for solid disk. Sun: additive glow.
 			if (m_bIsNight)
 			{
 				SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
 				SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 			}
+
 			SHADERMANAGER.CommitChanges();
 
-			DWORD dwBodyColor;
-			float fSize;
-			if (m_bIsNight)
-			{
-				dwBodyColor = 0xFFC0C8D8; // pale silver-blue
-				fSize = m_fMoonSize;
-			}
-			else
-			{
-				dwBodyColor = 0xFFFFC850; // warm orange-yellow
-				fSize = m_fSunSize;
-			}
+			DWORD dwBodyColor = m_bIsNight ? 0xFFC0C8D8 : 0xFFFFC850;
+			float fSize = m_bIsNight ? m_fMoonSize : m_fSunSize;
 
 			TPDTVertex bodyVerts[4];
+
 			bodyVerts[0].position.x = vBodyPos.x + (-vRight.x + vUp.x) * fSize;
 			bodyVerts[0].position.y = vBodyPos.y + (-vRight.y + vUp.y) * fSize;
 			bodyVerts[0].position.z = vBodyPos.z + (-vRight.z + vUp.z) * fSize;
@@ -948,92 +937,66 @@ void CSkyBox::Render()
 				SHADERMANAGER.Draw(TOPOLOGY_TRIANGLESTRIP, 0, 2);
 		}
 
-		// Reset material params to prevent leak
-		SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-
-		SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
-		SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
-		SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-		SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
+		SHADERMANAGER.PopState();
 	}
 #endif
 
-	// Restore lighting state
-	SHADERMANAGER.SetLightingEnabled(bSavedLighting);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-
-	// Restore fog state
-	SHADERMANAGER.SetFogEnabled(bSavedFog);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
+	SHADERMANAGER.PopState();
 }
 
 void CSkyBox::RenderCloud()
 {
-	CGraphicImageInstance * pCloudGraphicImageInstance = m_GraphicImageInstanceMap[m_FaceCloud.m_strfacename];
+	CGraphicImageInstance* pCloudGraphicImageInstance =
+		m_GraphicImageInstanceMap[m_FaceCloud.m_strfacename];
+
 	if (!pCloudGraphicImageInstance)
 		return;
 
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE,	TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
+	SHADERMANAGER.PushState();
 
-	// Save and set lighting state
-	bool bSavedLightingCloud = SHADERMANAGER.GetLightingEnabled();
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
 	SHADERMANAGER.SetLightingEnabled(false);
-
-	// Save and set fog state
-	bool bSavedFogCloud = SHADERMANAGER.GetFogEnabled();
 	SHADERMANAGER.SetFogEnabled(false);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_ONE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCCOLOR);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_ONE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCCOLOR);
 
 	m_matTextureCloud._41 = m_fCloudPositionU;
 	m_matTextureCloud._42 = m_fCloudPositionV;
 
 	DWORD dwCurTime = DX::StepTimer::instance().GetTotalMillieSeconds();
 
-	m_fCloudPositionU += m_fCloudScrollSpeedU * (float)( dwCurTime - m_dwlastTime ) * 0.001f;
+	m_fCloudPositionU += m_fCloudScrollSpeedU * (float)(dwCurTime - m_dwlastTime) * 0.001f;
 	if (m_fCloudPositionU >= 1.0f)
 		m_fCloudPositionU = 0.0f;
 
-	m_fCloudPositionV += m_fCloudScrollSpeedV * (float)( dwCurTime - m_dwlastTime ) * 0.001f;
+	m_fCloudPositionV += m_fCloudScrollSpeedV * (float)(dwCurTime - m_dwlastTime) * 0.001f;
 	if (m_fCloudPositionV >= 1.0f)
 		m_fCloudPositionV = 0.0f;
 
 	m_dwlastTime = dwCurTime;
 
-	SHADERMANAGER.SaveTransform(MATRIX_TEXTURE0, &m_matTextureCloud);
-
+	SHADERMANAGER.SetMatrix(MATRIX_TEXTURE0, &m_matTextureCloud);
 
 	Matrix matProjCloud;
 	const D3D11_VIEWPORT& viewport = CGraphicBase::GetViewport();
-	float fAspect = (viewport.Height > 0) ? (viewport.Width / viewport.Height) : 1.33333f;
+	float fAspect = viewport.Height > 0 ? viewport.Width / viewport.Height : 1.33333f;
+
 	MatrixPerspectiveFovRH(&matProjCloud, MATH_PI * 0.25f, fAspect, 1.0f, 999999.0f);
+
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &m_matWorldCloud);
-	SHADERMANAGER.SaveTransform(MATRIX_PROJECTION, &matProjCloud);
+	SHADERMANAGER.SetMatrix(MATRIX_PROJECTION, &matProjCloud);
 
 	CGraphicTexture* pCloudTexture = pCloudGraphicImageInstance->GetTexturePointer();
+
 	if (!pCloudTexture)
 	{
-		SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
-		SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE0);
-		SHADERMANAGER.SetLightingEnabled(bSavedLightingCloud);
-		SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE);
-		SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-		SHADERMANAGER.SetFogEnabled(bSavedFogCloud);
-		SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-		SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-		SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+		SHADERMANAGER.PopState();
 		return;
 	}
 
-	ID3D11ShaderResourceView* pSRV = pCloudTexture->GetD3DTexture();
-
-	SHADERMANAGER.SetShaderResource(0, pSRV);
+	SHADERMANAGER.SetShaderResource(0, pCloudTexture->GetD3DTexture());
 
 	if (SHADERMANAGER.IsInitialized())
 	{
@@ -1041,39 +1004,29 @@ void CSkyBox::RenderCloud()
 		SHADERMANAGER.SetWorldMatrix(&m_matWorldCloud);
 		SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 		SHADERMANAGER.SetSkyTint(0xFFFFFFFF);
-		// Tell shader to use texture (vMaterialParams.w = 1.0)
 		SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 1.0f);
 		SHADERMANAGER.CommitChanges();
 	}
 
 	m_FaceCloud.Render();
 
-	// Reset material params after cloud rendering — same vMaterialParams.w leak as sky faces.
-	SHADERMANAGER.SetMaterialParams(0.0f, 0.0f, 0.0f, 0.0f);
-
-	SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
-
-	SHADERMANAGER.RestoreTransform(MATRIX_TEXTURE0);
-
-	// Restore lighting state
-	SHADERMANAGER.SetLightingEnabled(bSavedLightingCloud);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-
-	// Restore fog state
-	SHADERMANAGER.SetFogEnabled(bSavedFogCloud);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+	SHADERMANAGER.PopState();
 }
 
 #ifdef ENABLE_CELESTIAL_BODY
 void CSkyBox::SetCelestialBodyTexture(const char* szSunTexture, const char* szMoonTexture)
 {
-	if (m_pSunTextureInstance) { DeleteTexture(m_pSunTextureInstance); m_pSunTextureInstance = nullptr; }
-	if (m_pMoonTextureInstance) { DeleteTexture(m_pMoonTextureInstance); m_pMoonTextureInstance = nullptr; }
+	if (m_pSunTextureInstance)
+	{
+		DeleteTexture(m_pSunTextureInstance);
+		m_pSunTextureInstance = nullptr;
+	}
+
+	if (m_pMoonTextureInstance)
+	{
+		DeleteTexture(m_pMoonTextureInstance);
+		m_pMoonTextureInstance = nullptr;
+	}
 
 	m_bCelestialReady = false;
 
@@ -1083,7 +1036,9 @@ void CSkyBox::SetCelestialBodyTexture(const char* szSunTexture, const char* szMo
 	if (szMoonTexture && strlen(szMoonTexture) > 0)
 		m_pMoonTextureInstance = GenerateTexture(szMoonTexture);
 
-	m_bCelestialReady = (m_pSunTextureInstance != nullptr || m_pMoonTextureInstance != nullptr);
+	m_bCelestialReady =
+		m_pSunTextureInstance != nullptr ||
+		m_pMoonTextureInstance != nullptr;
 }
 
 void CSkyBox::SetLightDirection(const Vector3& vLightDir, bool bIsNight)

@@ -685,29 +685,37 @@ void CPythonCharacterManager::__RenderSortedAliveActorList()
 	static std::vector<CInstanceBase*> s_kVct_pkInstAliveSort;
 	s_kVct_pkInstAliveSort.clear();
 
-	TCharacterInstanceMap& rkMap_pkInstAlive=m_kAliveInstMap;
+	TCharacterInstanceMap& rkMap_pkInstAlive = m_kAliveInstMap;
 	s_kVct_pkInstAliveSort.reserve(rkMap_pkInstAlive.size());
-	TCharacterInstanceMap::iterator i;
-	for (i=rkMap_pkInstAlive.begin(); i!=rkMap_pkInstAlive.end(); ++i)
-		s_kVct_pkInstAliveSort.push_back(i->second);
+
+	for (auto& [key, inst] : rkMap_pkInstAlive)
+		s_kVct_pkInstAliveSort.push_back(inst);
 
 #ifdef ENABLE_CHAR_RENDER_LIMIT
 	if (ms_iRenderLimit > 0)
 	{
 		CCamera* pCamera = CCameraManager::Instance().GetCurrentCamera();
+
 		if (pCamera)
 		{
 			Vector3 v3CameraPos = pCamera->GetEye();
+
 			std::sort(s_kVct_pkInstAliveSort.begin(), s_kVct_pkInstAliveSort.end(),
-				[&v3CameraPos](CInstanceBase* a, CInstanceBase* b) {
+				[&v3CameraPos](CInstanceBase* a, CInstanceBase* b)
+				{
 					const Vector3& v3PosA = a->GetGraphicThingInstanceRef().GetPosition();
 					const Vector3& v3PosB = b->GetGraphicThingInstanceRef().GetPosition();
-					float fDistA = (v3PosA.x - v3CameraPos.x) * (v3PosA.x - v3CameraPos.x) +
-								   (v3PosA.y - v3CameraPos.y) * (v3PosA.y - v3CameraPos.y) +
-								   (v3PosA.z - v3CameraPos.z) * (v3PosA.z - v3CameraPos.z);
-					float fDistB = (v3PosB.x - v3CameraPos.x) * (v3PosB.x - v3CameraPos.x) +
-								   (v3PosB.y - v3CameraPos.y) * (v3PosB.y - v3CameraPos.y) +
-								   (v3PosB.z - v3CameraPos.z) * (v3PosB.z - v3CameraPos.z);
+
+					float fDistA =
+						(v3PosA.x - v3CameraPos.x) * (v3PosA.x - v3CameraPos.x) +
+						(v3PosA.y - v3CameraPos.y) * (v3PosA.y - v3CameraPos.y) +
+						(v3PosA.z - v3CameraPos.z) * (v3PosA.z - v3CameraPos.z);
+
+					float fDistB =
+						(v3PosB.x - v3CameraPos.x) * (v3PosB.x - v3CameraPos.x) +
+						(v3PosB.y - v3CameraPos.y) * (v3PosB.y - v3CameraPos.y) +
+						(v3PosB.z - v3CameraPos.z) * (v3PosB.z - v3CameraPos.z);
+
 					return fDistA < fDistB;
 				});
 		}
@@ -723,11 +731,11 @@ void CPythonCharacterManager::__RenderSortedAliveActorList()
 	}
 
 #ifdef ENABLE_RENDER_MODE_GROUPING
-	// Group characters by render mode
 	static std::vector<CInstanceBase*> s_kVct_pkInstNormal;
 	static std::vector<CInstanceBase*> s_kVct_pkInstBlend;
 	static std::vector<CInstanceBase*> s_kVct_pkInstAdd;
 	static std::vector<CInstanceBase*> s_kVct_pkInstModulate;
+
 	s_kVct_pkInstNormal.clear();
 	s_kVct_pkInstBlend.clear();
 	s_kVct_pkInstAdd.clear();
@@ -745,18 +753,14 @@ void CPythonCharacterManager::__RenderSortedAliveActorList()
 	if (VTFMANAGER.IsInitialized())
 		VTFMANAGER.ClearDeferredRigidBatches();
 
-	for (auto it = s_kVct_pkInstAliveSort.begin(); it != s_kVct_pkInstAliveSort.end(); ++it)
+	for (CInstanceBase* pInstance : s_kVct_pkInstAliveSort)
 	{
-		CInstanceBase* pInstance = *it;
-
 #ifdef ENABLE_CHAR_RENDER_LIMIT
-		// Always render main player and PCs, only limit NPCs/mobs
-		bool bIsImportant = (pInstance == pkInstMain) || pInstance->IsPC();
+		bool bIsImportant = pInstance == pkInstMain || pInstance->IsPC();
 
-		// Check render limit (skip only non-important entities)
 		if (!bIsImportant && iLimit > 0 && iRenderCount >= iLimit)
 		{
-			ms_iSkippedByLimit++;
+			++ms_iSkippedByLimit;
 			continue;
 		}
 #endif
@@ -764,46 +768,44 @@ void CPythonCharacterManager::__RenderSortedAliveActorList()
 #ifdef ENABLE_FRUSTUM_CULLING
 		if (pkInstMain)
 		{
-			ms_iTotalCount++;
+			++ms_iTotalCount;
 
-			// Frustum culling check
 			Vector3 v3Center;
 			float fRadius = pInstance->GetGraphicThingInstanceRef().GetBoundingSphereRadius();
 			pInstance->GetGraphicThingInstanceRef().GetBoundingSpherePosition(&v3Center);
 
-			// Use CScreen's frustum for visibility test
 			if (CScreen::GetFrustum().ViewVolumeTest(Vector3d(v3Center.x, v3Center.y, v3Center.z), fRadius) == VS_OUTSIDE)
 			{
-				ms_iCulledCount++;
+				++ms_iCulledCount;
 				continue;
 			}
 
-			ms_iRenderedCount++;
+			++ms_iRenderedCount;
 		}
 #endif
 
-
 #ifdef ENABLE_CHAR_RENDER_LIMIT
-		iRenderCount++;
+		++iRenderCount;
 #endif
 
 #ifdef ENABLE_RENDER_MODE_GROUPING
-		// Group by render mode
-		int iRenderMode = pInstance->GetGraphicThingInstanceRef().GetRenderMode();
-		switch (iRenderMode)
+		switch (pInstance->GetGraphicThingInstanceRef().GetRenderMode())
 		{
-			case CActorInstance::RENDER_MODE_BLEND:
-				s_kVct_pkInstBlend.push_back(pInstance);
-				break;
-			case CActorInstance::RENDER_MODE_ADD:
-				s_kVct_pkInstAdd.push_back(pInstance);
-				break;
-			case CActorInstance::RENDER_MODE_MODULATE:
-				s_kVct_pkInstModulate.push_back(pInstance);
-				break;
-			default:
-				s_kVct_pkInstNormal.push_back(pInstance);
-				break;
+		case CActorInstance::RENDER_MODE_BLEND:
+			s_kVct_pkInstBlend.push_back(pInstance);
+			break;
+
+		case CActorInstance::RENDER_MODE_ADD:
+			s_kVct_pkInstAdd.push_back(pInstance);
+			break;
+
+		case CActorInstance::RENDER_MODE_MODULATE:
+			s_kVct_pkInstModulate.push_back(pInstance);
+			break;
+
+		default:
+			s_kVct_pkInstNormal.push_back(pInstance);
+			break;
 		}
 #else
 		if (VTFMANAGER.IsInitialized())
@@ -812,21 +814,25 @@ void CPythonCharacterManager::__RenderSortedAliveActorList()
 			pInstance->RenderWithRigidDefer();
 		}
 		else
+		{
 			pInstance->Render();
+		}
+
 		pInstance->RenderTrace();
 #endif
 	}
 
 #ifndef ENABLE_RENDER_MODE_GROUPING
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.PushState();
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 
 	if (VTFMANAGER.IsInitialized() && VTFMANAGER.HasDeferredRigidBatches())
 		VTFMANAGER.FlushDeferredRigidBatches();
 
-	for (auto it = s_kVct_pkInstVTFDeferred.begin(); it != s_kVct_pkInstVTFDeferred.end(); ++it)
-		(*it)->RenderBlendPassDeferred();
+	for (CInstanceBase* pInstance : s_kVct_pkInstVTFDeferred)
+		pInstance->RenderBlendPassDeferred();
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+	SHADERMANAGER.PopState();
 #endif
 
 #ifdef ENABLE_RENDER_MODE_GROUPING
@@ -834,77 +840,88 @@ void CPythonCharacterManager::__RenderSortedAliveActorList()
 	{
 		VTFMANAGER.ClearDeferredRigidBatches();
 
-		for (auto it = s_kVct_pkInstNormal.begin(); it != s_kVct_pkInstNormal.end(); ++it)
+		for (CInstanceBase* pInstance : s_kVct_pkInstNormal)
 		{
-			(*it)->RenderWithRigidDefer();
-			(*it)->RenderTrace();
+			pInstance->RenderWithRigidDefer();
+			pInstance->RenderTrace();
 		}
 
-		SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+		SHADERMANAGER.PushState();
+		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 
 		VTFMANAGER.FlushDeferredRigidBatches();
 
-		for (auto it = s_kVct_pkInstNormal.begin(); it != s_kVct_pkInstNormal.end(); ++it)
-			(*it)->RenderBlendPassDeferred();
+		for (CInstanceBase* pInstance : s_kVct_pkInstNormal)
+			pInstance->RenderBlendPassDeferred();
 
-		SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+		SHADERMANAGER.PopState();
 	}
 	else
 	{
-		for (auto it = s_kVct_pkInstNormal.begin(); it != s_kVct_pkInstNormal.end(); ++it)
+		for (CInstanceBase* pInstance : s_kVct_pkInstNormal)
 		{
-			(*it)->Render();
-			(*it)->RenderTrace();
+			pInstance->Render();
+			pInstance->RenderTrace();
 		}
 	}
 
 	if (VTFMANAGER.IsInitialized())
 	{
-		auto renderModeVTF = [](std::vector<CInstanceBase*>& vec) {
-			if (vec.empty()) return;
-			VTFMANAGER.ClearDeferredRigidBatches();
-			for (auto it = vec.begin(); it != vec.end(); ++it)
+		auto renderModeVTF = [](std::vector<CInstanceBase*>& vec)
 			{
-				(*it)->RenderWithRigidDefer();
-				(*it)->RenderTrace();
-			}
-			SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
-			VTFMANAGER.FlushDeferredRigidBatches();
-			for (auto it = vec.begin(); it != vec.end(); ++it)
-				(*it)->RenderBlendPassDeferred();
-			SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
-		};
+				if (vec.empty())
+					return;
+
+				VTFMANAGER.ClearDeferredRigidBatches();
+
+				for (CInstanceBase* pInstance : vec)
+				{
+					pInstance->RenderWithRigidDefer();
+					pInstance->RenderTrace();
+				}
+
+				SHADERMANAGER.PushState();
+				SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
+
+				VTFMANAGER.FlushDeferredRigidBatches();
+
+				for (CInstanceBase* pInstance : vec)
+					pInstance->RenderBlendPassDeferred();
+
+				SHADERMANAGER.PopState();
+			};
+
 		renderModeVTF(s_kVct_pkInstBlend);
 		renderModeVTF(s_kVct_pkInstAdd);
 		renderModeVTF(s_kVct_pkInstModulate);
 	}
 	else
 	{
-		for (auto it = s_kVct_pkInstBlend.begin(); it != s_kVct_pkInstBlend.end(); ++it)
+		for (CInstanceBase* pInstance : s_kVct_pkInstBlend)
 		{
-			(*it)->Render();
-			(*it)->RenderTrace();
+			pInstance->Render();
+			pInstance->RenderTrace();
 		}
-		for (auto it = s_kVct_pkInstAdd.begin(); it != s_kVct_pkInstAdd.end(); ++it)
+
+		for (CInstanceBase* pInstance : s_kVct_pkInstAdd)
 		{
-			(*it)->Render();
-			(*it)->RenderTrace();
+			pInstance->Render();
+			pInstance->RenderTrace();
 		}
-		for (auto it = s_kVct_pkInstModulate.begin(); it != s_kVct_pkInstModulate.end(); ++it)
+
+		for (CInstanceBase* pInstance : s_kVct_pkInstModulate)
 		{
-			(*it)->Render();
-			(*it)->RenderTrace();
+			pInstance->Render();
+			pInstance->RenderTrace();
 		}
 	}
 
-	// Update stats
 	ms_iRenderModeNormal = (int)s_kVct_pkInstNormal.size();
 	ms_iRenderModeBlend = (int)s_kVct_pkInstBlend.size();
 	ms_iRenderModeAdd = (int)s_kVct_pkInstAdd.size();
 	ms_iRenderModeModulate = (int)s_kVct_pkInstModulate.size();
 #endif
 }
-
 void CPythonCharacterManager::__RenderSortedDeadActorList()
 {
 	static std::vector<CInstanceBase*> s_kVct_pkInstDeadSort;

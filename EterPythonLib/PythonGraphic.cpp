@@ -402,10 +402,8 @@ void CPythonGraphic::PushState()
 
 	curState.matProj = ms_matProj;
 	curState.matView = ms_matView;
-	//SHADERMANAGER.SaveTransform(D3DTS_WORLD, &m_SaveWorldMatrix);
 
 	m_stateStack.push(curState);
-	//CCamera::Instance().PushParams();
 }
 
 void CPythonGraphic::PopState()
@@ -418,14 +416,12 @@ void CPythonGraphic::PopState()
 
 	TState & rState = m_stateStack.top();
 
-	//SHADERMANAGER.RestoreTransform(D3DTS_WORLD);
 	ms_matProj = rState.matProj;
 	ms_matView = rState.matView;
 
 	UpdatePipeLineMatrix();
 
 	m_stateStack.pop();
-	//CCamera::Instance().PopParams();
 }
 
 void CPythonGraphic::RenderImage(CGraphicImageInstance* pImageInstance, float x, float y)

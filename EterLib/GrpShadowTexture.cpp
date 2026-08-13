@@ -143,63 +143,62 @@ void CGraphicShadowTexture::Begin()
 {
 	MatrixMultiply(&m_d3dLightVPMatrix, &ms_matView, &ms_matProj);
 
-	// Save current render targets
 	ms_pContext->OMGetRenderTargets(1, &m_pOldRTV, &m_pOldDSV);
 
-	// Save old viewport
 	UINT numViewports = 1;
 	ms_pContext->RSGetViewports(&numViewports, &m_d3dOldViewport);
 
-	// Set shadow render target
 	ms_pContext->OMSetRenderTargets(1, &m_pShadowRTV, m_pDepthDSV);
 
-	// Set new viewport
-	D3D11_VIEWPORT viewport;
+	D3D11_VIEWPORT viewport{};
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
 	viewport.Width = (float)m_width;
 	viewport.Height = (float)m_height;
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
+
 	ms_pContext->RSSetViewports(1, &viewport);
 
-	// Clear the shadow render target
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 	ms_pContext->ClearRenderTargetView(m_pShadowRTV, clearColor);
-	ms_pContext->ClearDepthStencilView(m_pDepthDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	ms_pContext->ClearDepthStencilView(
+		m_pDepthDSV,
+		D3D11_CLEAR_DEPTH,
+		1.0f,
+		0);
 
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHFUNC, COMPARISON_LESSEQUAL);
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, true);
+	SHADERMANAGER.PushState();
 
-	// Save alpha test state manually and set new value
-	m_bSavedAlphaTestEnabled = SHADERMANAGER.GetAlphaTestEnabled();
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHFUNC, COMPARISON_LESSEQUAL);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+
 	SHADERMANAGER.SetAlphaTestEnabled(true);
-
-	// Save texture factor manually and set new value
-	m_dwSavedParticleColor = SHADERMANAGER.GetParticleColor();
 	SHADERMANAGER.SetParticleColor(0xbb000000);
 
 	SHADERMANAGER.SetDefaultTexture(0);
 
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-	SHADERMANAGER.SaveSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(0, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
 
-	SHADERMANAGER.SetShaderResource(1, (ID3D11ShaderResourceView*)NULL);
+	SHADERMANAGER.SetShaderResource(1, nullptr);
 
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
-	SHADERMANAGER.SaveSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_MINFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_MAGFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_MIPFILTER, FILTER_ANISOTROPIC);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_CLAMP);
+	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_CLAMP);
 }
 
 void CGraphicShadowTexture::End()
 {
-	// Restore render targets (handles null gracefully)
+	SHADERMANAGER.PopState();
+
 	ms_pContext->OMSetRenderTargets(1, &m_pOldRTV, m_pOldDSV);
 	ms_pContext->RSSetViewports(1, &m_d3dOldViewport);
 
@@ -208,33 +207,12 @@ void CGraphicShadowTexture::End()
 		m_pOldRTV->Release();
 		m_pOldRTV = nullptr;
 	}
+
 	if (m_pOldDSV)
 	{
 		m_pOldDSV->Release();
 		m_pOldDSV = nullptr;
 	}
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHFUNC);
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-
-	// Restore alpha test state
-	SHADERMANAGER.SetAlphaTestEnabled(m_bSavedAlphaTestEnabled);
-
-	// Restore texture factor
-	SHADERMANAGER.SetParticleColor(m_dwSavedParticleColor);
-
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MAGFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_MIPFILTER);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSU);
-	SHADERMANAGER.RestoreSamplerState(0, SAMPLER_ADDRESSV);
-
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_MINFILTER);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_MAGFILTER);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_MIPFILTER);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-	SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
 }
 
 void CGraphicShadowTexture::Initialize()

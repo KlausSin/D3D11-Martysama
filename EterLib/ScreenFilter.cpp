@@ -7,22 +7,21 @@ void CScreenFilter::Render()
 	if (!m_bEnable)
 		return;
 
-	SHADERMANAGER.SaveTransform(MATRIX_PROJECTION, &ms_matIdentity);
- 	SHADERMANAGER.SaveTransform(MATRIX_VIEW, &ms_matIdentity);
- 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &ms_matIdentity);
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, m_bySrcType);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, m_byDestType);
+	SHADERMANAGER.PushState();
+
+	SHADERMANAGER.SetMatrix(MATRIX_PROJECTION, &ms_matIdentity);
+	SHADERMANAGER.SetMatrix(MATRIX_VIEW, &ms_matIdentity);
+	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &ms_matIdentity);
+
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, m_bySrcType);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, m_byDestType);
 
 	SetOrtho2D(CScreen::ms_iWidth, CScreen::ms_iHeight, 400.0f);
 	SetDiffuseColor(m_Color.r, m_Color.g, m_Color.b, m_Color.a);
 	RenderBar2d(0, 0, CScreen::ms_iWidth, CScreen::ms_iHeight);
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
- 	SHADERMANAGER.RestoreTransform(MATRIX_VIEW);
-	SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
+	SHADERMANAGER.PopState();
 }
 
 void CScreenFilter::SetEnable(BOOL /*bFlag*/)

@@ -2,7 +2,6 @@
 #include "GrpDevice.h"
 #include "MatrixStack.h"
 #include "ShaderManager.h"
-#include "StateManager.h"
 #include "VTFInstanceManager.h"
 #include "VolumetricFog.h"
 #include "../eterBase/Stl.h"
@@ -24,8 +23,6 @@ static CShaderManager gs_kShaderManager;
 
 static CVTFInstanceManager gs_kVTFInstanceManager;
 static CVolumetricFog gs_kVolumetricFog;
-
-static CStateManager* gs_pStateManager = nullptr;
 
 bool CPU_HAS_SSE2 = true;
 
@@ -1160,13 +1157,6 @@ int CGraphicDevice::Create(HWND hWnd, int iHres, int iVres, bool Windowed, int /
 		}
 	}
 
-	if (gs_pStateManager)
-	{
-		delete gs_pStateManager;
-		gs_pStateManager = nullptr;
-	}
-	gs_pStateManager = new CStateManager(ms_pDevice, ms_pContext);
-
 	// Create matrix stack for compatibility
 	ms_pMatrixStack = new CMatrixStack();
 	ms_pMatrixStack->LoadIdentity();
@@ -1597,15 +1587,8 @@ void CGraphicDevice::Destroy()
 		}
 	}
 
-
 	if (ms_hWnd)
 		ShowWindow(ms_hWnd, SW_HIDE);
-
-	if (gs_pStateManager)
-	{
-		delete gs_pStateManager;
-		gs_pStateManager = nullptr;
-	}
 
 	// Shutdown shader system
 	CShaderManager* pShaderMgr = CShaderManager::InstancePtr();

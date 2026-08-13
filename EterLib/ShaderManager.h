@@ -18,7 +18,6 @@
  */
 
 #include <d3d11.h>
-#include <d3d11_1.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <unordered_map>
@@ -26,14 +25,21 @@
 #include "GrpLightType.h"
 #include "GrpStateEnum.h"
 #include "StateObjectCache.h"
+#include "DX11Cache.h"
 #include "../eterBase/Singleton.h"
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || (!defined(_MSVC_LANG) && __cplusplus >= 202002L)
+#include <source_location>
+#define HAS_SOURCE_LOCATION 1
+#else
+#define HAS_SOURCE_LOCATION 0
+#endif
 
 #pragma comment(lib, "d3dcompiler.lib")
 
 using namespace DirectX;
 #include <wrl/client.h>
 using namespace Microsoft::WRL;
-
+#include "DX11Resource.h"
 //////////////////////////////////////////////////////////////////////////
 // Shader Type Enumeration
 //////////////////////////////////////////////////////////////////////////
@@ -101,17 +107,21 @@ enum EComputeShader
 //////////////////////////////////////////////////////////////////////////
 struct GpuBuffer
 {
-	ID3D11Buffer* pBuffer;
-	ID3D11ShaderResourceView* pSRV;
-	ID3D11UnorderedAccessView* pUAV;
-	UINT elementCount;
-	UINT elementSize;
-	GpuBuffer() : pBuffer(nullptr), pSRV(nullptr), pUAV(nullptr), elementCount(0), elementSize(0) {}
-	bool IsValid() const { return pBuffer != nullptr; }
+	ID3D11Buffer* pBuffer{};
+	ID3D11ShaderResourceView* pSRV{};
+	ID3D11UnorderedAccessView* pUAV{};
+	UINT elementCount{};
+	UINT elementSize{};
+
+	// [[nodiscard]] = Warns if the caller ignores the returned value
+	[[nodiscard]] bool IsValid() const noexcept
+	{
+		return pBuffer != nullptr;
+	}
 };
 
 
-static const int MAX_SHADER_LIGHTS = 16;
+inline constexpr int MAX_SHADER_LIGHTS = 16;
 
 // Light types: Use ELightType enum from GrpStateEnum.h
 // LIGHT_POINT = 1, LIGHT_SPOT = 2, LIGHT_DIRECTIONAL = 3
@@ -140,7 +150,7 @@ struct DX11Material
 //////////////////////////////////////////////////////////////////////////
 
 // Lighting constant buffer - supports multiple lights
-__declspec(align(16)) struct CBLighting
+struct alignas(16) CBLighting
 {
 	DX11Light lights[MAX_SHADER_LIGHTS];
 	XMFLOAT4 globalAmbient;     // rgb = ambient color, a = unused
@@ -149,7 +159,7 @@ __declspec(align(16)) struct CBLighting
 };
 
 // Per-frame constants - updated once per frame
-__declspec(align(16)) struct CBPerFrame
+struct alignas(16) CBPerFrame
 {
 	XMMATRIX matView;
 	XMMATRIX matProjection;
@@ -169,7 +179,7 @@ __declspec(align(16)) struct CBPerFrame
 };
 
 // Per-object constants - updated per draw call
-__declspec(align(16)) struct CBPerObject
+struct alignas(16) CBPerObject
 {
 	XMMATRIX matWorld;
 	XMMATRIX matWorldViewProj;
@@ -187,10 +197,10 @@ __declspec(align(16)) struct CBPerObject
 };
 
 // SpeedTree constants - wind matrices and tree data
-static const int SPEEDTREE_NUM_WIND_MATRICES = 4;
-static const int SPEEDTREE_MAX_LEAF_TABLES = 48;
+inline constexpr int SPEEDTREE_NUM_WIND_MATRICES = 4;
+inline constexpr int SPEEDTREE_MAX_LEAF_TABLES = 48;
 
-__declspec(align(16)) struct CBSpeedTree
+struct alignas(16) CBSpeedTree
 {
 	XMMATRIX matWindMatrices[SPEEDTREE_NUM_WIND_MATRICES];  // Wind rotation matrices (register 54-69)
 	XMFLOAT4 vTreePos;           // Tree position (register 52)
@@ -206,15 +216,15 @@ __declspec(align(16)) struct CBSpeedTree
 	int _pad[3];
 };
 
-static const int MAX_BONES = 256;
+inline constexpr int MAX_BONES = 256;
 
-__declspec(align(16)) struct CBSkinning
+struct alignas(16) CBSkinning
 {
 	XMMATRIX boneMatrices[MAX_BONES];  // Bone transformation matrices
 };
 
 // God Rays (Volumetric Light Scattering) constants
-__declspec(align(16)) struct CBGodRays
+struct alignas(16) CBGodRays
 {
 	XMFLOAT4 vLightScreenPos;  // xy = light position in screen UV space, z = intensity, w = decay
 	XMFLOAT4 vRayParams;       // x = density, y = weight, z = exposure, w = numSamples
@@ -223,7 +233,7 @@ __declspec(align(16)) struct CBGodRays
 
 // Bloom post-process constants
 #ifdef ENABLE_BLOOM
-__declspec(align(16)) struct CBBloom
+struct alignas(16) CBBloom
 {
 	XMFLOAT4 vBloomParams;    // x=threshold, y=intensity
 	XMFLOAT4 vTexelSize;      // x=1/bloomW, y=1/bloomH
@@ -233,8 +243,8 @@ __declspec(align(16)) struct CBBloom
 
 // SSAO (Screen-Space Ambient Occlusion) constants
 #ifdef ENABLE_SSAO
-static const int SSAO_KERNEL_SIZE = 16;
-__declspec(align(16)) struct CBSSAO
+inline constexpr int SSAO_KERNEL_SIZE = 16;
+struct alignas(16) CBSSAO
 {
 	XMMATRIX matProjection;               // For projecting samples to screen
 	XMMATRIX matInvProjection;            // For unprojecting depth to view-space
@@ -246,8 +256,8 @@ __declspec(align(16)) struct CBSSAO
 
 // Water reflection/refraction constants
 
-static const int SKY_GRADIENT_MAX_POINTS = 8;
-__declspec(align(16)) struct CBSkyGradient
+inline constexpr int SKY_GRADIENT_MAX_POINTS = 8;
+struct alignas(16) CBSkyGradient
 {
 	XMFLOAT4 colors[SKY_GRADIENT_MAX_POINTS]; // Current blended gradient control points (RGBA)
 	int      colorCount;                       // Number of active control points
@@ -256,7 +266,7 @@ __declspec(align(16)) struct CBSkyGradient
 };
 
 // Particle Compute Shader constants
-__declspec(align(16)) struct CBParticleCS
+struct alignas(16) CBParticleCS
 {
 	XMFLOAT3 camUp;       float _pad0;   // Camera up vector
 	XMFLOAT3 camCross;    float _pad1;   // Camera right (cross) vector
@@ -292,7 +302,7 @@ struct FlyTraceSegmentInput
 };
 
 // Fly Trace Compute Shader constants
-__declspec(align(16)) struct CBFlyTraceCS
+struct alignas(16) CBFlyTraceCS
 {
 	XMFLOAT3 camEye;     float _pad0;    // 16 bytes
 	XMFLOAT3 camFwd;     float _pad1;    // 16 bytes
@@ -308,7 +318,7 @@ struct WeaponTraceSplineSegment
 };  // 64 bytes total
 
 // Weapon Trace Compute Shader constants
-__declspec(align(16)) struct CBWeaponTraceCS
+struct alignas(16) CBWeaponTraceCS
 {
 	UINT numSegments;       // Number of spline segments per spline
 	UINT numSamples;        // Number of output sample points
@@ -362,9 +372,6 @@ struct SamplerSlotState
 	bool dirty;
 };
 
-static const UINT CB_RING_SLOTS_PEROBJECT = 256;
-static const UINT CB_RING_SLOTS_SKINNING = 64;
-inline UINT CBRingAlign256(UINT n) { return (n + 255u) & ~255u; }
 
 //////////////////////////////////////////////////////////////////////////
 // Shader Manager Class
@@ -380,7 +387,10 @@ public:
 	bool Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 	void Shutdown();
 	void SetDefaultState();  // Reset render states to defaults (after resize, etc.)
-	bool IsInitialized() const { return m_bInitialized; }
+	bool IsInitialized() const
+	{
+		return m_bInitialized;
+	}
 
 	// Dynamic buffer size constants
 	static const DWORD        DYNAMIC_VB_SIZE = 131072;  // 128KB for vertex data
@@ -418,16 +428,14 @@ public:
 	//--------------------------------------------------------------------
 	void SetBoneMatrices(const Matrix* pMatrices, int count);
 
-	EShaderType GetCurrentShader() const { return m_eCurrentShader; }
+	EShaderType GetCurrentShader() const
+	{
+		return m_eCurrentShader;
+	}
 
 	//--------------------------------------------------------------------
 	// Multithreaded Rendering Support (Deferred Contexts)
 	//--------------------------------------------------------------------
-	// Thread-local context override for worker threads
-	ID3D11DeviceContext* GetActiveContext() const {
-		return m_pContext;
-	}
-
 	void SyncPerFrameToContext(ID3D11DeviceContext* pDeferredCtx, ID3D11Buffer* pCBPerFrame);
 
 	void SyncLightingToContext(ID3D11DeviceContext* pDeferredCtx, ID3D11Buffer* pCBLighting);
@@ -446,18 +454,42 @@ public:
 	void UpdateSkinningOnContext(ID3D11DeviceContext* pDeferredCtx, ID3D11Buffer* pCBSkinning,
 		const Matrix* pBoneMatrices, int boneCount);
 
-	const CBPerFrame& GetPerFrameData() const { return m_cbPerFrame; }
-	const CBLighting& GetLightingData() const { return m_cbLighting; }
-	const CBPerObject& GetPerObjectData() const { return m_cbPerObject; }
+	const CBPerFrame& GetPerFrameData() const
+	{
+		return m_cbPerFrame;
+	}
+	const CBLighting& GetLightingData() const
+	{
+		return m_cbLighting;
+	}
+	const CBPerObject& GetPerObjectData() const
+	{
+		return m_cbPerObject;
+	}
 
 	// Get shadow SRVs for re-binding on deferred contexts
-	ID3D11ShaderResourceView* GetShadowTextureBig() const { return m_pTextures[2]; }
-	ID3D11ShaderResourceView* GetShadowTextureLocal() const { return m_pTextures[3]; }
-	ID3D11ShaderResourceView* GetShadowTextureMid() const { return m_pTextures[4]; }
-	ID3D11ShaderResourceView* GetShadowTextureFar() const { return m_pTextures[5]; }
+	ID3D11ShaderResourceView* GetShadowTextureBig() const
+	{
+		return m_dx11Cache.GetShaderResource(2);
+	}
+	ID3D11ShaderResourceView* GetShadowTextureLocal() const
+	{
+		return m_dx11Cache.GetShaderResource(3);
+	}
+	ID3D11ShaderResourceView* GetShadowTextureMid() const
+	{
+		return m_dx11Cache.GetShaderResource(4);
+	}
+	ID3D11ShaderResourceView* GetShadowTextureFar() const
+	{
+		return m_dx11Cache.GetShaderResource(5);
+	}
 
 	// Get render state copy for thread-local initialization
-	const PendingRenderState& GetRenderStateCopy() const { return m_RenderState; }
+	const PendingRenderState& GetRenderStateCopy() const
+	{
+		return m_RenderState;
+	}
 
 	void CopyTransforms(Matrix* pDest, int maxCount) const {
 		int count = (maxCount < (int)MAX_TRANSFORMS) ? maxCount : (int)MAX_TRANSFORMS;
@@ -471,7 +503,10 @@ public:
 	}
 
 	// Get current input layout type
-	EInputLayoutType GetCurrentInputLayout() const { return m_CurrentInputLayout; }
+	EInputLayoutType GetCurrentInputLayout() const
+	{
+		return m_CurrentInputLayout;
+	}
 
 	//--------------------------------------------------------------------
 	// Input Layout Binding (Native DX11)
@@ -498,7 +533,10 @@ public:
 
 	void SetShadowCullPlanes(const float* pafPlanes4x4);   // NULL disables culling
 	bool IsInShadowCull(float x, float y, float z, float fRadius) const;
-	bool IsShadowCullActive() const { return m_bShadowCullActive; }
+	bool IsShadowCullActive() const
+	{
+		return m_bShadowCullActive;
+	}
 	void SetReflectionClipZ(float fWaterZ);
 	void SetShadowMatrices(const Matrix* pBig, const Matrix* pLocal);
 	void SetShadowMidFarMatrices(const Matrix* pMid, const Matrix* pFar);
@@ -510,8 +548,14 @@ public:
 	void SetGodRaysParams(float fScreenX, float fScreenY, float fIntensity, float fDecay);
 	void SetGodRaysRayParams(float fDensity, float fWeight, float fExposure, int nSamples);
 	void SetGodRaysColor(float r, float g, float b);
-	bool IsGodRaysEnabled() const { return m_bGodRaysEnabled; }
-	void SetGodRaysEnabled(bool bEnabled) { m_bGodRaysEnabled = bEnabled; }
+	bool IsGodRaysEnabled() const
+	{
+		return m_bGodRaysEnabled;
+	}
+	void SetGodRaysEnabled(bool bEnabled)
+	{
+		m_bGodRaysEnabled = bEnabled;
+	}
 #ifdef ENABLE_GODRAYS
 	void RenderGodRaysPass(
 		ID3D11ShaderResourceView* pSceneSRV,
@@ -522,7 +566,10 @@ public:
 #ifdef ENABLE_BLOOM
 	// Bloom Post-Process
 	void SetBloomEnabled(bool bEnabled);
-	bool IsBloomEnabled() const { return m_bBloomEnabled; }
+	bool IsBloomEnabled() const
+	{
+		return m_bBloomEnabled;
+	}
 	void SetBloomParams(float threshold, float intensity);
 	void BeginBloomBright();
 	void BeginBloomBlur();
@@ -540,7 +587,10 @@ public:
 #ifdef ENABLE_SSAO
 	// SSAO Post-Process
 	void SetSSAOEnabled(bool bEnabled);
-	bool IsSSAOEnabled() const { return CGraphicBase::GetSSAOEnabled(); }
+	bool IsSSAOEnabled() const
+	{
+		return CGraphicBase::GetSSAOEnabled();
+	}
 	void RenderDepthResolve(
 		ID3D11ShaderResourceView* pMSAADepthSRV,
 		ID3D11RenderTargetView* pResolvedRTV,
@@ -601,23 +651,22 @@ public:
 	// Commit pending constant buffer updates
 	void CommitChanges();
 
-	void __CommitCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceContext1* pCtx1,
-		ID3D11Buffer* pBuf, UINT& rOffset, UINT& rBound, UINT ringBytes,
-		const void* pSrc, UINT srcBytes, int vsSlot, int psSlot,
-		bool* pForceDiscard = nullptr);
-
-	void __BindCBRing(ID3D11DeviceContext* pCtx, ID3D11DeviceContext1* pCtx1,
-		ID3D11Buffer* pBuf, UINT boundOffset, UINT srcBytes,
-		int vsSlot, int psSlot, bool bRing);
 
 	//--------------------------------------------------------------------
 	// Texture Binding
 	//--------------------------------------------------------------------
 	void SetShaderResource(UINT slot, ID3D11ShaderResourceView* pSRV);
+	ID3D11ShaderResourceView* GetShaderResource(UINT slot) const;
 	void SetDefaultTexture(UINT slot = 0);  // Explicitly bind white default texture (for UI backgrounds)
 	void OnFrameComplete();  // Call after each frame to track frame count
-	int GetFrameCount() const { return m_iFrameCount; }
-	ID3D11ShaderResourceView* GetDefaultTexture() const { return m_pActiveDefaultTextureSRV; }  // Returns active (transparent during init, then white)
+	int GetFrameCount() const
+	{
+		return m_iFrameCount;
+	}
+	ID3D11ShaderResourceView* GetDefaultTexture() const
+	{
+		return m_pActiveDefaultTextureSRV;
+	} // Returns active (transparent during init, then white)
 
 	//--------------------------------------------------------------------
 	// Input Layout Access
@@ -629,12 +678,12 @@ public:
 	//--------------------------------------------------------------------
 	void SetPipelineState(EPipelineState state, DWORD value);
 	DWORD GetPipelineState(EPipelineState state);
-	void SavePipelineState(EPipelineState state, DWORD value);
-	void RestorePipelineState(EPipelineState state);
 
 	// Stream/Buffer binding
 	void SetVertexBuffer(UINT stream, ID3D11Buffer* pBuffer, UINT stride, UINT offset = 0);
+	void GetVertexBuffer(UINT stream, ID3D11Buffer** pBuffer, UINT* pStride, UINT* pOffset) const;
 	void SetIndexBuffer(ID3D11Buffer* pBuffer, DXGI_FORMAT format = DXGI_FORMAT_R16_UINT, UINT offset = 0);
+	void GetIndexBuffer(ID3D11Buffer** pBuffer, DXGI_FORMAT* pFormat, UINT* pOffset) const;
 
 	void SetPrimitiveTopologyIfChanged(D3D11_PRIMITIVE_TOPOLOGY topology);
 
@@ -642,8 +691,13 @@ public:
 
 	// Drawing
 	void Draw(EPrimitiveTopology type, UINT startVertex, UINT primitiveCount);
-	void DrawIndexed(EPrimitiveTopology type, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount, INT baseVertex);
-	void DrawIndexed(EPrimitiveTopology type, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount);  // 5-arg overload (baseVertex=0)
+	void DrawIndexed(
+		EPrimitiveTopology type,
+		UINT minIndex,
+		UINT numVertices,
+		UINT startIndex,
+		UINT primitiveCount,
+		INT baseVertex = 0);
 	void DrawDynamic(EPrimitiveTopology type, UINT primitiveCount, const void* pVertexData, UINT stride);
 	void DrawIndexedDynamic(EPrimitiveTopology type, UINT minIndex, UINT numVertices, UINT primitiveCount, const void* pIndexData, DXGI_FORMAT indexFormat, const void* pVertexData, UINT stride);
 	void DrawIndexedInstanced(EPrimitiveTopology type, UINT indexCountPerInstance, UINT instanceCount, UINT startIndex = 0, INT baseVertex = 0, UINT startInstance = 0);
@@ -677,7 +731,10 @@ public:
 	void CSSetUAV(UINT slot, ID3D11UnorderedAccessView* pUAV);
 	void CSSetCB(UINT slot, ID3D11Buffer* pCB);
 	void CSUnbindResources();
-	ID3D11Device* GetDevice() const { return m_pDevice; }
+	ID3D11Device* GetDevice() const
+	{
+		return m_pDevice;
+	}
 
 	//--------------------------------------------------------------------
 	// Particle Compute Shader Billboard System
@@ -689,7 +746,10 @@ public:
 	bool DispatchParticleBillboardCS(const ParticleGPUInput* pParticles, UINT count,
 		UINT facesPerParticle, const float fRotations[3], const Matrix* pAttachMatrix);
 	void DrawParticleCSOutput(UINT quadCount);
-	bool IsComputeParticlesAvailable() const { return m_bComputeParticlesAvailable; }
+	bool IsComputeParticlesAvailable() const
+	{
+		return m_bComputeParticlesAvailable;
+	}
 
 	struct ParticleBatchKey
 	{
@@ -725,8 +785,14 @@ public:
 	};
 
 	void ResetParticleBatcher();
-	bool IsParticleBatchingActive() const { return m_bParticleBatchingActive; }
-	void SetParticleBatchingActive(bool b) { m_bParticleBatchingActive = b; }
+	bool IsParticleBatchingActive() const
+	{
+		return m_bParticleBatchingActive;
+	}
+	void SetParticleBatchingActive(bool b)
+	{
+		m_bParticleBatchingActive = b;
+	}
 	void AddParticleToBatch(const ParticleBatchKey& key, const ParticleGPUInput& input);
 	void FlushParticleBatches();
 
@@ -740,36 +806,90 @@ public:
 		UINT meshElemsDrawn;  // effect mesh elements rendered (per-frame)
 	};
 
-	void StatsNoteMeshElem() { m_particleBatchStats.meshElemsDrawn++; }
-	const ParticleBatchStats& GetParticleBatchStats() const { return m_particleBatchStats; }
-	void ResetParticleBatchStats() { memset(&m_particleBatchStats, 0, sizeof(m_particleBatchStats)); }
-	void StatsNotePSIContribution() { m_particleBatchStats.psisContributed++; }
+	void StatsNoteMeshElem()
+	{
+		m_particleBatchStats.meshElemsDrawn++;
+	}
+	const ParticleBatchStats& GetParticleBatchStats() const
+	{
+		return m_particleBatchStats;
+	}
+	void ResetParticleBatchStats()
+	{
+		memset(&m_particleBatchStats, 0, sizeof(m_particleBatchStats));
+	}
+	void StatsNotePSIContribution()
+	{
+		m_particleBatchStats.psisContributed++;
+	}
 
-	UINT GetGlobalDrawCount() const { return m_globalDrawCount; }
-	void ResetGlobalDrawCount() { m_globalDrawCount = 0; }
+	UINT GetGlobalDrawCount() const
+	{
+		return m_globalDrawCount;
+	}
+	void ResetGlobalDrawCount()
+	{
+		m_globalDrawCount = 0;
+	}
 	void IncrementGlobalDrawCount()
 	{
 		++m_globalDrawCount;
 		++t_subsystemDrawCount;
 	}
 
-	static void ResetSubsystemDrawCount() { t_subsystemDrawCount = 0; }
-	static UINT GetSubsystemDrawCount() { return t_subsystemDrawCount; }
+	static void ResetSubsystemDrawCount()
+	{
+		t_subsystemDrawCount = 0;
+	}
+	static UINT GetSubsystemDrawCount()
+	{
+		return t_subsystemDrawCount;
+	}
 
-	void SnapshotPhase0_AfterShadow() { m_drawPhase0 = m_globalDrawCount; }
-	void SnapshotPhase1_AfterWorkers() { m_drawPhase1 = m_globalDrawCount; }
-	void SnapshotPhase2_AfterWater() { m_drawPhase2 = m_globalDrawCount; }
-	UINT GetPhaseDraws_Shadow()  const { return m_drawPhase0; }
-	UINT GetPhaseDraws_Workers() const { return m_drawPhase1 >= m_drawPhase0 ? m_drawPhase1 - m_drawPhase0 : 0; }
-	UINT GetPhaseDraws_Water()   const { return m_drawPhase2 >= m_drawPhase1 ? m_drawPhase2 - m_drawPhase1 : 0; }
-	UINT GetPhaseDraws_AfterWater() const { return m_globalDrawCount >= m_drawPhase2 ? m_globalDrawCount - m_drawPhase2 : 0; }
+	void SnapshotPhase0_AfterShadow()
+	{
+		m_drawPhase0 = m_globalDrawCount;
+	}
+	void SnapshotPhase1_AfterWorkers()
+	{
+		m_drawPhase1 = m_globalDrawCount;
+	}
+	void SnapshotPhase2_AfterWater()
+	{
+		m_drawPhase2 = m_globalDrawCount;
+	}
+	UINT GetPhaseDraws_Shadow()  const
+	{
+		return m_drawPhase0;
+	}
+	UINT GetPhaseDraws_Workers() const
+	{
+		return m_drawPhase1 >= m_drawPhase0 ? m_drawPhase1 - m_drawPhase0 : 0;
+	}
+	UINT GetPhaseDraws_Water()   const
+	{
+		return m_drawPhase2 >= m_drawPhase1 ? m_drawPhase2 - m_drawPhase1 : 0;
+	}
+	UINT GetPhaseDraws_AfterWater() const
+	{
+		return m_globalDrawCount >= m_drawPhase2 ? m_globalDrawCount - m_drawPhase2 : 0;
+	}
 
 	UINT terrainJobDraws = 0;
 	UINT characterJobDraws = 0;
 	UINT effectJobDraws = 0;
-	void StoreTerrainJobDraws(UINT n) { terrainJobDraws = n; }
-	void StoreCharacterJobDraws(UINT n) { characterJobDraws = n; }
-	void StoreEffectJobDraws(UINT n) { effectJobDraws = n; }
+	void StoreTerrainJobDraws(UINT n)
+	{
+		terrainJobDraws = n;
+	}
+	void StoreCharacterJobDraws(UINT n)
+	{
+		characterJobDraws = n;
+	}
+	void StoreEffectJobDraws(UINT n)
+	{
+		effectJobDraws = n;
+	}
 
 	double cpuMs_Frame = 0.0;
 	double cpuMs_Deform = 0.0;
@@ -791,7 +911,10 @@ public:
 	bool InitFlyTraceCSResources();
 	bool DispatchFlyTraceCS(const FlyTraceSegmentInput* pSegments, UINT count);
 	void DrawFlyTraceCSOutput(UINT segmentCount);
-	bool IsFlyTraceCSAvailable() const { return m_bFlyTraceCSAvailable; }
+	bool IsFlyTraceCSAvailable() const
+	{
+		return m_bFlyTraceCSAvailable;
+	}
 
 	//--------------------------------------------------------------------
 	// Weapon Trace Compute Shader Spline System
@@ -802,30 +925,34 @@ public:
 	bool InitWeaponTraceCSResources();
 	bool DispatchWeaponTraceCS(const WeaponTraceSplineSegment* pSegments, UINT numSegments, const CBWeaponTraceCS& params);
 	void DrawWeaponTraceCSOutput(UINT numSamples);
-	bool IsWeaponTraceCSAvailable() const { return m_bWeaponTraceCSAvailable; }
+	bool IsWeaponTraceCSAvailable() const
+	{
+		return m_bWeaponTraceCSAvailable;
+	}
 
 	// Transform management
 	void SetMatrix(EMatrixSlot state, const Matrix* pMatrix);
 	void GetMatrix(EMatrixSlot state, Matrix* pMatrix);
-	void SaveTransform(EMatrixSlot state, const Matrix* pMatrix);
-	void RestoreTransform(EMatrixSlot state);
 
 	// Input layout by type
 	void SetInputLayout(EInputLayoutType type);
 	void SetInputLayout(ID3D11InputLayout* pLayout);  // Direct binding overload
-	void SaveInputLayout(EInputLayoutType type);
-	void RestoreInputLayout();
 
 	// Sampler state management
 	void SetSamplerState(UINT slot, ESamplerState state, DWORD value);
-	void SaveSamplerState(UINT slot, ESamplerState state, DWORD value);
-	void RestoreSamplerState(UINT slot, ESamplerState state);
+	DWORD GetSamplerState(UINT slot, ESamplerState state) const;
 
-	bool GetLightingEnabled() const { return m_bLightingEnabled; }
+	bool GetLightingEnabled() const
+	{
+		return m_bLightingEnabled;
+	}
 
 	// Fog state
 	void SetFogEnabled(bool bEnabled);
-	bool GetFogEnabled() const { return m_bFogEnabled; }
+	bool GetFogEnabled() const
+	{
+		return m_bFogEnabled;
+	}
 	void SetFogColor(DWORD dwColor);
 	void SetFogParams(float fStart, float fEnd, DWORD dwColor);
 	// Volumetric-fog dials, stored in spare CBPerFrame fields so no layout change is needed:
@@ -833,10 +960,24 @@ public:
 	// The dial VALUES live here, not only in the CB: MapManager calls SetFogParams()/SetFogColor()
 	// every frame from the env data, which was overwriting both CB fields and made the sliders
 	// look dead. ReapplyVolFogDials() restores them after any such write.
-	void  SetVolFogDensity(float d) { m_volFogDensity = (d < 0.0f) ? 0.0f : (d > 4.0f ? 4.0f : d); ReapplyVolFogDials(); }
-	void  SetVolFogStart(float v)   { m_volFogStart = (v < 0.0f) ? 0.0f : v; ReapplyVolFogDials(); }
-	float GetVolFogDensity() const  { return m_volFogDensity; }
-	float GetVolFogStart() const    { return m_volFogStart; }
+	void  SetVolFogDensity(float d)
+	{
+		m_volFogDensity = (d < 0.0f) ? 0.0f : (d > 4.0f ? 4.0f : d);
+		ReapplyVolFogDials();
+	}
+	void  SetVolFogStart(float v)
+	{
+		m_volFogStart = (v < 0.0f) ? 0.0f : v;
+		ReapplyVolFogDials();
+	}
+	float GetVolFogDensity() const
+	{
+		return m_volFogDensity;
+	}
+	float GetVolFogStart() const
+	{
+		return m_volFogStart;
+	}
 	void  ReapplyVolFogDials()
 	{
 		m_cbPerFrame.vFogColor.w  = m_volFogDensity;
@@ -847,8 +988,14 @@ public:
 	float m_volFogStart   = 0.0f;
 
 	// Texture factor — must read thread-local on workers (setter writes thread-local)
-	DWORD GetSkyTint() const { return m_dwSkyTint; }
-	DWORD GetParticleColor() const { return m_dwParticleColor; }
+	DWORD GetSkyTint() const
+	{
+		return m_dwSkyTint;
+	}
+	DWORD GetParticleColor() const
+	{
+		return m_dwParticleColor;
+	}
 
 	// Best filtering helper
 	void SetBestFiltering(UINT slot);
@@ -866,8 +1013,6 @@ public:
 	// Legacy material API (TMaterial)
 	void SetMaterial(const TMaterial* pMaterial);
 	void GetMaterial(TMaterial* pMaterial) const;
-	void SaveMaterial();
-	void RestoreMaterial();
 
 	// Legacy light API (TLight)
 	void SetLight(UINT index, const TLight* pLight);
@@ -884,7 +1029,10 @@ public:
 
 	// Commit all pending state changes
 	void CommitRenderState();
-
+	ID3D11DeviceContext* GetActiveContext() const
+	{
+		return m_pContext;
+	}
 private:
 	// Shader compilation with caching
 	bool CompileAllShaders();
@@ -908,38 +1056,20 @@ private:
 
 	ID3D11Device* m_pDevice;
 	ID3D11DeviceContext* m_pContext;
-	ID3D11DeviceContext1* m_pContext1 = nullptr;
-	bool                    m_bCBRingSupported = false;
-	UINT                    m_cbPerObjectOffset = 0;
-	UINT                    m_cbSkinningOffset = 0;
-	UINT                    m_cbPerObjectBound = 0;
-	UINT                    m_cbSkinningBound = 0;
 	bool                    m_bInitialized;
 	int                     m_iFrameCount;  // Frame counter for startup - use transparent texture for first few frames
 
 	// Shader resources per type
-	struct ShaderProgram
-	{
-		ID3D11VertexShader* pVertexShader;
-		ID3D11PixelShader* pPixelShader;
-		ID3D11InputLayout* pInputLayout;
-		ID3DBlob* pVSBlob;
-
-		ShaderProgram() : pVertexShader(nullptr), pPixelShader(nullptr),
-			pInputLayout(nullptr), pVSBlob(nullptr) {
-		}
-	};
-
-	ShaderProgram m_Shaders[SHADER_COUNT]{};
 	EShaderType   m_eCurrentShader;
 
 	// Constant buffers
-	ComPtr<ID3D11Buffer> m_pCBPerFrame = nullptr;
-	ComPtr<ID3D11Buffer> m_pCBPerObject = nullptr;
-	ComPtr<ID3D11Buffer> m_pCBLighting = nullptr;
-	ComPtr<ID3D11Buffer> m_pCBSpeedTree = nullptr;
-	ComPtr<ID3D11Buffer> m_pCBSkinning = nullptr;
-	ComPtr<ID3D11Buffer> m_pCBGodRays = nullptr;
+	CD3D11ConstantBuffer<CBPerFrame> m_pCBPerFrame;
+	CD3D11ConstantBuffer<CBPerObject> m_pCBPerObject;
+	CD3D11ConstantBuffer<CBLighting> m_pCBLighting;
+	CD3D11ConstantBuffer<CBSpeedTree> m_pCBSpeedTree;
+	CD3D11ConstantBuffer<CBSkinning> m_pCBSkinning;
+	CD3D11ConstantBuffer<CBGodRays> m_pCBGodRays;
+	CD3D11ConstantBuffer<CBSkyGradient> m_pCBSkyGradient;
 
 	CBPerFrame    m_cbPerFrame{};
 	CBPerObject   m_cbPerObject{};
@@ -948,7 +1078,6 @@ private:
 	CBSkinning    m_cbSkinning{};
 	CBGodRays     m_cbGodRays{};
 
-	ComPtr<ID3D11Buffer> m_pCBSkyGradient = nullptr;
 	CBSkyGradient m_cbSkyGradient{};
 	bool          m_bSkyGradientDirty;
 	bool          m_bPerFrameDirty;
@@ -963,12 +1092,12 @@ private:
 	bool          m_bGodRaysDirty;
 	bool          m_bGodRaysEnabled;
 #ifdef ENABLE_BLOOM
-	ID3D11Buffer* m_pCBBloom;
+	CD3D11ConstantBuffer<CBBloom> m_pCBBloom;
 	CBBloom       m_cbBloom{};
 	bool          m_bBloomEnabled;
 #endif
 #ifdef ENABLE_SSAO
-	ID3D11Buffer* m_pCBSSAO;
+	CD3D11ConstantBuffer<CBSSAO> m_pCBSSAO;
 	CBSSAO        m_cbSSAO{};
 	bool          m_bSSAODirty;
 	ID3D11Texture2D* m_pSSAONoiseTex;
@@ -994,38 +1123,19 @@ private:
 
 	PendingRenderState        m_RenderState;
 
-	// Current state objects
-	ID3D11BlendState* m_pCurrentBlendState;
-	ID3D11RasterizerState* m_pCurrentRasterizerState;
-	ID3D11DepthStencilState* m_pCurrentDepthStencilState;
+	// Currently bound native DX11 state/bindings
+	CDX11Cache m_dx11Cache;
 
 	// Dirty flags
 	bool                      m_bBlendStateDirty;
 	bool                      m_bRasterizerStateDirty;
 	bool                      m_bDepthStencilStateDirty;
 
-	// Saved render states (for Save/Restore pattern)
-	std::unordered_map<EPipelineState, DWORD> m_SavedRenderStates;
 
 	// Transform matrices
 	static const DWORD MAX_TRANSFORMS = 300;
 	Matrix                    m_Matrices[MAX_TRANSFORMS]{};
-	Matrix                    m_SavedMatrices[MAX_TRANSFORMS]{};
 
-	// Stream data
-	static const DWORD MAX_STREAMS = 16;
-	struct StreamData {
-		ID3D11Buffer* pBuffer;
-		UINT stride;
-		UINT offset;
-		StreamData() : pBuffer(nullptr), stride(0), offset(0) {}
-	};
-	StreamData                m_Streams[MAX_STREAMS]{};
-	ID3D11Buffer* m_pCurrentIndexBuffer;
-	DXGI_FORMAT               m_IndexFormat;
-	UINT                      m_IndexOffset;
-
-	D3D11_PRIMITIVE_TOPOLOGY  m_CurrentTopology;
 
 	ID3D11Buffer* m_pDynamicVertexBuffer;
 	ID3D11Buffer* m_pDynamicIndexBuffer;
@@ -1034,7 +1144,7 @@ private:
 	bool                      m_bDynamicBufferNeedsDiscard;  // True at frame start
 
 	static const UINT         SKINNING_CB_POOL_SIZE = 256;
-	ID3D11Buffer* m_pSkinningCBPool[SKINNING_CB_POOL_SIZE]{};
+	CD3D11ConstantBuffer<CBSkinning> m_pSkinningCBPool[SKINNING_CB_POOL_SIZE]{};
 	UINT                      m_dwSkinningPoolIndex;
 
 	// Cross-PSI particle batcher storage
@@ -1047,13 +1157,13 @@ private:
 	UINT                      m_drawPhase1 = 0;
 	UINT                      m_drawPhase2 = 0;
 
-	// Compute shaders
-	ID3D11ComputeShader* m_ComputeShaders[CS_COUNT]{};
+	CD3D11Shader m_Shaders[SHADER_COUNT];
+	CD3D11Shader m_ComputeShaders[CS_COUNT];
 
 	// Particle CS resources
 	GpuBuffer                 m_particleCSInput;      // Structured buffer (CPU write, SRV)
 	GpuBuffer                 m_particleCSOutput;     // Raw VB+UAV buffer
-	ID3D11Buffer* m_pCBParticleCS;        // Particle CS constant buffer
+	CD3D11ConstantBuffer<CBParticleCS> m_pCBParticleCS;        // Particle CS constant buffer
 	ID3D11Buffer* m_pParticleCSIB;        // Index buffer for CS output quads
 	CBParticleCS              m_cbParticleCS{};          // CPU-side CB data
 	bool                      m_bComputeParticlesAvailable;
@@ -1061,7 +1171,7 @@ private:
 	// FlyTrace CS resources
 	GpuBuffer                 m_flyTraceCSInput;      // Structured buffer (CPU write, SRV)
 	GpuBuffer                 m_flyTraceCSOutput;     // Raw VB+UAV buffer
-	ID3D11Buffer* m_pCBFlyTraceCS;        // FlyTrace CS constant buffer
+	CD3D11ConstantBuffer<CBFlyTraceCS> m_pCBFlyTraceCS;        // FlyTrace CS constant buffer
 	ID3D11Buffer* m_pFlyTraceCSIB;        // Index buffer for CS output segments
 	CBFlyTraceCS              m_cbFlyTraceCS{};          // CPU-side CB data
 	bool                      m_bFlyTraceCSAvailable;
@@ -1069,13 +1179,12 @@ private:
 	// WeaponTrace CS resources
 	GpuBuffer                 m_weaponTraceCSInput;   // Structured buffer (short+long segments, CPU write, SRV)
 	GpuBuffer                 m_weaponTraceCSOutput;  // Raw VB+UAV buffer (triangle strip vertices)
-	ID3D11Buffer* m_pCBWeaponTraceCS;     // WeaponTrace CS constant buffer
+	CD3D11ConstantBuffer<CBWeaponTraceCS> m_pCBWeaponTraceCS;     // WeaponTrace CS constant buffer
 	CBWeaponTraceCS           m_cbWeaponTraceCS{};       // CPU-side CB data
 	bool                      m_bWeaponTraceCSAvailable;
 
 	// Input layout
 	EInputLayoutType          m_CurrentInputLayout;
-	EInputLayoutType          m_SavedInputLayout;
 
 	// Lighting/Fog/AlphaTest state
 	bool                      m_bLightingEnabled;
@@ -1085,16 +1194,12 @@ private:
 
 	// Saved material for Save/Restore pattern
 	TMaterial                 m_CurrentMaterial{};
-	TMaterial                 m_SavedMaterial{};
 
 	// Sampler state storage
 	static const DWORD MAX_SAMPLER_SLOTS = 8;
 	static const DWORD STATEMANAGER_MAX_STAGES = 8;  // Max texture stages
 	SamplerSlotState        m_SamplerStates[MAX_SAMPLER_SLOTS]{};
-	std::unordered_map<UINT, std::unordered_map<ESamplerState, DWORD>> m_SavedSamplerStates;
 
-	// Texture slots
-	ID3D11ShaderResourceView* m_pTextures[STATEMANAGER_MAX_STAGES]{};
 
 	// Texture factor color
 	bool                      m_bTwoTextureBlend;
@@ -1106,7 +1211,54 @@ private:
 	void UpdateRasterizerState();
 	void UpdateDepthStencilState();
 	bool CreateDynamicBuffers();
-	void ApplyRenderStates();  // Commit all pending state changes to GPU
+
+	public:
+	struct SShaderStateSnapshot
+	{
+		PendingRenderState renderState{};
+
+		SamplerSlotState samplers[MAX_SAMPLER_SLOTS]{};
+
+		Matrix matrices[MAX_TRANSFORMS]{};
+
+		ID3D11ShaderResourceView* textures[STATEMANAGER_MAX_STAGES]{};
+
+		TMaterial material{};
+
+		EInputLayoutType inputLayout{ INPUT_LAYOUT_PDT };
+
+		bool lightingEnabled{};
+		bool fogEnabled{};
+		bool alphaTestEnabled{};
+		bool twoTextureBlend{};
+
+		DWORD alphaTestRef{};
+		DWORD skyTint{};
+		DWORD particleColor{};
+
+		CBPerFrame perFrame{};
+		CBPerObject perObject{};
+		CBLighting lighting{};
+
+#if HAS_SOURCE_LOCATION
+		const char* pushFile = nullptr;
+		const char* pushFunction = nullptr;
+		uint_least32_t pushLine = 0;
+#endif
+	};
+
+#if HAS_SOURCE_LOCATION
+	void PushState(const std::source_location& loc = std::source_location::current());
+	void PopState(const std::source_location& loc = std::source_location::current());
+	void ValidateStateStack(const std::source_location& loc = std::source_location::current());
+#else
+	void PushState();
+	void PopState();
+	void ValidateStateStack();
+#endif
+
+	std::vector<SShaderStateSnapshot> m_stateStack;
+
 };
 
 #define SHADERMANAGER CShaderManager::Instance()

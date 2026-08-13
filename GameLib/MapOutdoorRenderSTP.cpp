@@ -346,7 +346,8 @@ void CMapOutdoor::__SoftwareTransformPatch_ApplyRenderState()
 	if (!IsTLVertexClipping())
 		isSoftwareVertexClipping=TRUE;
 
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.PushState();
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
 
 	bool bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
 	SHADERMANAGER.SetAlphaTestEnabled(true);
@@ -389,7 +390,7 @@ void CMapOutdoor::__SoftwareTransformPatch_RestoreRenderState(bool bFogEnable)
 	std::sort(m_RenderedTextureNumVector.begin(),m_RenderedTextureNumVector.end());
 
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
+	SHADERMANAGER.PopState();
 
 	// Render State
 	//////////////////////////////////////////////////////////////////////////

@@ -164,11 +164,11 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 		CCamera* pCamera = CCameraManager::Instance().GetCurrentCamera();
 		if (!pCamera)
 			return;
+
 		UpdateCompundMatrix(pCamera->GetEye(), ms_matView, ms_matProj);
 	}
 
-
-	bool bSavedLightState = SHADERMANAGER.GetLightingEnabled();
+	SHADERMANAGER.PushState();
 
 #ifdef WRAPPER_USE_DYNAMIC_LIGHTING
 	SHADERMANAGER.SetLightingEnabled(true);
@@ -183,13 +183,11 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 
 	while (itor != m_pMainTreeMap.end())
 	{
-		CSpeedTreeWrapper * pMainTree = (itor++)->second;
-		CSpeedTreeWrapper ** ppInstances = pMainTree->GetInstances(uiCount);
+		CSpeedTreeWrapper* pMainTree = (itor++)->second;
+		CSpeedTreeWrapper** ppInstances = pMainTree->GetInstances(uiCount);
 
 		for (UINT i = 0; i < uiCount; ++i)
-		{
 			ppInstances[i]->Advance();
-		}
 	}
 
 	SHADERMANAGER.SetSpeedTreeLight(m_afLighting);
@@ -200,17 +198,14 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 		SHADERMANAGER.SetSamplerState(0, SAMPLER_MINFILTER, FILTER_LINEAR);
 		SHADERMANAGER.SetSamplerState(0, SAMPLER_MAGFILTER, FILTER_LINEAR);
 		SHADERMANAGER.SetSamplerState(0, SAMPLER_MIPFILTER, FILTER_LINEAR);
-
 		SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_WRAP);
 		SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_WRAP);
 	}
 
-	bool bSavedAlphaTestEnable = SHADERMANAGER.GetAlphaTestEnabled();
 	SHADERMANAGER.SetAlphaTestEnabled(true);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_FRONT);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_FRONT);
 
 	SHADERMANAGER.BeginSpeedTree();
-
 	SHADERMANAGER.SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	if (!(ulRenderBitVector & Forest_RenderToShadow))
@@ -222,8 +217,8 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 
 		while (itor != m_pMainTreeMap.end())
 		{
-			CSpeedTreeWrapper * pMainTree = (itor++)->second;
-			CSpeedTreeWrapper ** ppInstances = pMainTree->GetInstances(uiCount);
+			CSpeedTreeWrapper* pMainTree = (itor++)->second;
+			CSpeedTreeWrapper** ppInstances = pMainTree->GetInstances(uiCount);
 
 			pMainTree->SetupBranchForTreeType();
 
@@ -233,7 +228,6 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 		}
 	}
 
-	// set render states
 	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 
 	if (ulRenderBitVector & Forest_RenderFronds)
@@ -242,8 +236,8 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 
 		while (itor != m_pMainTreeMap.end())
 		{
-			CSpeedTreeWrapper * pMainTree = (itor++)->second;
-			CSpeedTreeWrapper ** ppInstances = pMainTree->GetInstances(uiCount);
+			CSpeedTreeWrapper* pMainTree = (itor++)->second;
+			CSpeedTreeWrapper** ppInstances = pMainTree->GetInstances(uiCount);
 
 			pMainTree->SetupFrondForTreeType();
 
@@ -253,24 +247,24 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 		}
 	}
 
-	// render leaves
 	if (ulRenderBitVector & Forest_RenderLeaves)
 	{
+		const bool bOverrideAlphaRef =
+			(ulRenderBitVector & Forest_RenderToShadow) ||
+			(ulRenderBitVector & Forest_RenderToMiniMap);
 
-		DWORD dwSavedAlphaRef = 0;
-		if (ulRenderBitVector & Forest_RenderToShadow || ulRenderBitVector & Forest_RenderToMiniMap)
-		{
-			dwSavedAlphaRef = SHADERMANAGER.GetAlphaTestRef();
-			SHADERMANAGER.SetAlphaTestRefByte(0x00000000);
-		}
+		if (bOverrideAlphaRef)
+			SHADERMANAGER.PushState();
 
+		if (bOverrideAlphaRef)
+			SHADERMANAGER.SetAlphaTestRefByte(0);
 
 		itor = m_pMainTreeMap.begin();
 
 		while (itor != m_pMainTreeMap.end())
 		{
-			CSpeedTreeWrapper * pMainTree = (itor++)->second;
-			CSpeedTreeWrapper ** ppInstances = pMainTree->GetInstances(uiCount);
+			CSpeedTreeWrapper* pMainTree = (itor++)->second;
+			CSpeedTreeWrapper** ppInstances = pMainTree->GetInstances(uiCount);
 
 			pMainTree->SetupLeafForTreeType();
 
@@ -279,38 +273,32 @@ void CSpeedTreeForestDX11::Render(unsigned long ulRenderBitVector)
 					ppInstances[i]->RenderLeaves((ulRenderBitVector & Forest_RenderToShadow) != 0);
 		}
 
-		if (ulRenderBitVector & Forest_RenderToShadow || ulRenderBitVector & Forest_RenderToMiniMap)
-		{
-			SHADERMANAGER.SetAlphaTestRefByte(dwSavedAlphaRef);
-		}
+		if (bOverrideAlphaRef)
+			SHADERMANAGER.PopState();
 	}
 
-	// render billboards
-	#ifndef WRAPPER_NO_BILLBOARD_MODE
-		if (ulRenderBitVector & Forest_RenderBillboards)
+#ifndef WRAPPER_NO_BILLBOARD_MODE
+	if (ulRenderBitVector & Forest_RenderBillboards)
+	{
+		SHADERMANAGER.SetLightingEnabled(false);
+
+		itor = m_pMainTreeMap.begin();
+
+		while (itor != m_pMainTreeMap.end())
 		{
-			SHADERMANAGER.SetLightingEnabled(false);
+			CSpeedTreeWrapper* pMainTree = (itor++)->second;
+			CSpeedTreeWrapper** ppInstances = pMainTree->GetInstances(uiCount);
 
-			itor = m_pMainTreeMap.begin();
+			pMainTree->SetupBranchForTreeType();
 
-			while (itor != m_pMainTreeMap.end())
-			{
-				CSpeedTreeWrapper * pMainTree = (itor++)->second;
-				CSpeedTreeWrapper ** ppInstances = pMainTree->GetInstances(uiCount);
-
-				pMainTree->SetupBranchForTreeType();
-
-				for (UINT i = 0; i < uiCount; ++i)
-					if (ppInstances[i]->isShow())
-						ppInstances[i]->RenderBillboards();
-			}
+			for (UINT i = 0; i < uiCount; ++i)
+				if (ppInstances[i]->isShow())
+					ppInstances[i]->RenderBillboards();
 		}
-	#endif
+	}
+#endif
 
-	SHADERMANAGER.SetLightingEnabled(bSavedLightState);
-
-	SHADERMANAGER.SetAlphaTestEnabled(bSavedAlphaTestEnable);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+	SHADERMANAGER.PopState();
 }
 
 void CSpeedTreeForestDX11::RenderToShadowMap()

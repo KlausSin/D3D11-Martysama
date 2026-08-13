@@ -143,11 +143,8 @@ void CSnowEnvironment::__ApplyBlur()
 
 void CSnowEnvironment::Render()
 {
-	if (!m_bSnowEnable)
-	{
-		if (m_kVct_pkParticleSnow.empty())
-			return;
-	}
+	if (!m_bSnowEnable && m_kVct_pkParticleSnow.empty())
+		return;
 
 	if (!ms_pContext)
 		return;
@@ -168,12 +165,14 @@ void CSnowEnvironment::Render()
 		return;
 	}
 
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.PushState();
+
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
 	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
-	SHADERMANAGER.SetShaderResource(1, NULL);
+	SHADERMANAGER.SetShaderResource(1, nullptr);
 	SHADERMANAGER.SetShaderResource(0, m_pImageInstance->GetGraphicImagePointer()->GetTextureReference().GetD3DTexture());
 
 	Matrix matIdentity;
@@ -191,22 +190,13 @@ void CSnowEnvironment::Render()
 			const Vector3& pos = pSnow->GetPosition();
 
 			ParticleGPUInput input;
-			input.posX = pos.x;
-			input.posY = pos.y;
-			input.posZ = pos.z;
-			input.lastPosX = pos.x;
-			input.lastPosY = pos.y;
-			input.lastPosZ = pos.z;
-			input.halfW = pSnow->GetHalfWidth();
-			input.halfH = pSnow->GetHalfHeight();
-			input.scaleX = 1.0f;
-			input.scaleY = 1.0f;
-			input.rotation = 0.0f;
-			input.color = 0xFFFFFFFF;
-			input.flags = 1;  // BILLBOARD_TYPE_ALL, no stretch, no attach
-			input._pad[0] = 0.0f;
-			input._pad[1] = 0.0f;
-			input._pad[2] = 0.0f;
+			input.posX = pos.x; input.posY = pos.y; input.posZ = pos.z;
+			input.lastPosX = pos.x; input.lastPosY = pos.y; input.lastPosZ = pos.z;
+			input.halfW = pSnow->GetHalfWidth(); input.halfH = pSnow->GetHalfHeight();
+			input.scaleX = 1.0f; input.scaleY = 1.0f; input.rotation = 0.0f;
+			input.color = 0xFFFFFFFF; input.flags = 1;
+			input._pad[0] = input._pad[1] = input._pad[2] = 0.0f;
+
 			s_snowCSInput.push_back(input);
 		}
 
@@ -218,24 +208,25 @@ void CSnowEnvironment::Render()
 		float fRots[3] = { 0.0f, 0.0f, 0.0f };
 		UINT totalParticles = (UINT)s_snowCSInput.size();
 		UINT csOffset = 0;
+
 		while (csOffset < totalParticles)
 		{
 			UINT chunkSize = min(totalParticles - csOffset, CShaderManager::MAX_CS_PARTICLES);
+
 			if (!SHADERMANAGER.DispatchParticleBillboardCS(
-					s_snowCSInput.data() + csOffset, chunkSize,
-					1, fRots, nullptr))
+				s_snowCSInput.data() + csOffset, chunkSize, 1, fRots, nullptr))
 				break;
+
 			SHADERMANAGER.DrawParticleCSOutput(chunkSize);
 			csOffset += chunkSize;
 		}
 	}
 	else if (GPU_PARTICLE_POOL.IsAvailable())
 	{
-		// Fallback: CPU billboard + GPU batched draw
 		const Vector3& c_rv3Up = pCamera->GetUp();
 		const Vector3& c_rv3Cross = pCamera->GetCross();
 
-		Vector3 v3Up = Vector3(-c_rv3Cross.x, -c_rv3Cross.y, -c_rv3Cross.z);
+		Vector3 v3Up(-c_rv3Cross.x, -c_rv3Cross.y, -c_rv3Cross.z);
 		Vector3 v3Cross = c_rv3Up;
 
 		GPU_PARTICLE_POOL.BeginBatch();
@@ -247,14 +238,15 @@ void CSnowEnvironment::Render()
 			float halfW = pSnow->GetHalfWidth();
 			float halfH = pSnow->GetHalfHeight();
 
-			Vector3 sc = -(halfW) * v3Cross;
-			Vector3 su = (halfH) * v3Up;
+			Vector3 sc = -halfW * v3Cross;
+			Vector3 su = halfH * v3Up;
 
 			GPUPTVertex verts[4];
 			Vector3 p0 = pos - su + sc;
 			Vector3 p1 = pos - su - sc;
 			Vector3 p2 = pos + su + sc;
 			Vector3 p3 = pos + su - sc;
+
 			verts[0] = { p0.x, p0.y, p0.z, 0.0f, 1.0f };
 			verts[1] = { p1.x, p1.y, p1.z, 0.0f, 0.0f };
 			verts[2] = { p2.x, p2.y, p2.z, 1.0f, 1.0f };
@@ -271,9 +263,7 @@ void CSnowEnvironment::Render()
 		GPU_PARTICLE_POOL.FlushBatch();
 	}
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+	SHADERMANAGER.PopState();
 
 	__ApplyBlur();
 }

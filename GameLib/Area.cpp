@@ -711,9 +711,9 @@ void CArea::RenderCollision()
 
 	SHADERMANAGER.SetDefaultTexture(0);
 	SHADERMANAGER.SetShaderResource(1, NULL);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, FALSE);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.PushState();
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, FALSE);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 	SHADERMANAGER.SetLightingEnabled(false);
 	if (SHADERMANAGER.IsInitialized())
 		SHADERMANAGER.SetParticleColor(0xff000000);
@@ -750,8 +750,7 @@ void CArea::RenderCollision()
 		}
 	}
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
+	SHADERMANAGER.PopState();
 	SHADERMANAGER.SetLightingEnabled(true);
 }
 

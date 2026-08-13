@@ -64,7 +64,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -363,6 +363,8 @@
     <ClCompile Include="CollisionData.cpp" />
     <ClCompile Include="ColorTransitionHelper.cpp" />
     <ClCompile Include="Decal.cpp" />
+    <ClCompile Include="DX11Cache.cpp" />
+    <ClCompile Include="DX11Resource.cpp" />
     <ClCompile Include="EnvironmentMap.cpp" />
     <ClCompile Include="FileLoaderThread.cpp" />
     <ClCompile Include="GrpCollisionObject.cpp" />
@@ -390,6 +392,7 @@
     <ClCompile Include="PathStack.cpp" />
     <ClCompile Include="ReferenceObject.cpp" />
     <ClCompile Include="ScreenFilter.cpp" />
+    <ClCompile Include="ShaderManagerCB.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -439,7 +442,6 @@
     <ClCompile Include="ShaderInit.cpp" />
     <ClCompile Include="VolumetricFog.cpp" />
     <ClCompile Include="VTFInstanceManager.cpp" />
-    <ClCompile Include="StateManager.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="ImGuiNameRenderer.cpp" />
     <ClCompile Include="..\..\Extern\imgui\imgui.cpp">
@@ -473,6 +475,8 @@
     <ClInclude Include="ColorTransitionHelper.h" />
     <ClInclude Include="Decal.h" />
     <ClInclude Include="DecodedImageData.h" />
+    <ClInclude Include="DX11Cache.h" />
+    <ClInclude Include="DX11Resource.h" />
     <ClInclude Include="Dynamic.h" />
     <ClInclude Include="ImageDecoder.h" />
     <ClInclude Include="EnvironmentMap.h" />
@@ -554,7 +558,6 @@
     <ClInclude Include="GrpMathType.h" />
     <ClInclude Include="GrpMathFunc.h" />
     <ClInclude Include="GrpLightType.h" />
-    <ClInclude Include="StateManager.h" />
     <ClInclude Include="StateObjectCache.h" />
     <ClInclude Include="GrpStateEnum.h" />
     <ClInclude Include="ImGuiManager.h" />

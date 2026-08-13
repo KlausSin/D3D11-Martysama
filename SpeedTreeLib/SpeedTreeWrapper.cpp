@@ -111,21 +111,13 @@ void CSpeedTreeWrapper::SetVertexShaders(ID3D11InputLayout* dwBranchVertexShader
 void CSpeedTreeWrapper::OnRenderPCBlocker()
 {
 	if (ms_dwBranchVertexShader == 0)
-	{
 		ms_dwBranchVertexShader = LoadBranchShader(ms_pDevice);
-		//LogBox("Vertex Shader not assigned. You must call CSpeedTreeWrapper::VSSetShader for this");
-	}
 
 	if (ms_dwLeafVertexShader == 0)
-	{
 		ms_dwLeafVertexShader = LoadLeafShader(ms_pDevice);
-		//LogBox("Vertex Shader not assigned. You must call CSpeedTreeWrapper::VSSetShader for this");
-	}
 
 	CSpeedTreeForestDX11::Instance().UpdateSystem(ELTimer_GetMSec() / 1000.0f);
-
 	m_pSpeedTree->SetLodLevel(1.0f);
-	//Advance();
 
 	CCamera* pCamera = CCameraManager::Instance().GetCurrentCamera();
 	if (!pCamera)
@@ -133,51 +125,44 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
 
 	CSpeedTreeForestDX11::Instance().UpdateCompundMatrix(pCamera->GetEye(), ms_matView, ms_matProj);
 
+	SHADERMANAGER.PushState();
 
-	bool bSavedLighting = SHADERMANAGER.GetLightingEnabled();
-	bool bSavedFogEnable = SHADERMANAGER.GetFogEnabled();
-	bool bSavedAlphaTestEnable = SHADERMANAGER.GetAlphaTestEnabled();
-	DWORD dwAlphaBlendEnable = SHADERMANAGER.GetPipelineState(PSTATE_BLENDENABLE);
-	SHADERMANAGER.SetLightingEnabled(true);  // SpeedTree shader handles lighting
+	SHADERMANAGER.SetLightingEnabled(true);
 	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
 	SHADERMANAGER.SetAlphaTestEnabled(true);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_FRONT);
-	SHADERMANAGER.SetFogEnabled(true);  // SpeedTree shader handles fog
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_FRONT);
+	SHADERMANAGER.SetFogEnabled(true);
 
 	BeginShaderSpeedTreeRender(1.0f);
 
-	// 	SetupBranchForTreeType():
 	{
-		// update the branch geometry for CPU wind
 #ifdef WRAPPER_USE_CPU_WIND
 		m_pSpeedTree->GetGeometry(*m_pGeometryCache, SpeedTree_BranchGeometry);
 
 		if (m_pGeometryCache->m_sBranches.m_usNumStrips > 0)
 		{
 			D3D11_MAPPED_SUBRESOURCE mappedResource;
+
 			if (SUCCEEDED(ms_pContext->Map(m_pBranchVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
 				SBranchVertex* pVertexBuffer = (SBranchVertex*)mappedResource.pData;
+
 				for (UINT i = 0; i < m_unBranchVertexCount; ++i)
-				{
-					memcpy(&(pVertexBuffer[i].m_vPosition), &(m_pGeometryCache->m_sBranches.m_pCoords[i * 3]), 3 * sizeof(float));
-				}
+					memcpy(&pVertexBuffer[i].m_vPosition, &m_pGeometryCache->m_sBranches.m_pCoords[i * 3], 3 * sizeof(float));
+
 				ms_pContext->Unmap(m_pBranchVertexBuffer, 0);
 			}
 		}
 #endif
 
-		ID3D11ShaderResourceView* lpd3dTexture;
+		ID3D11ShaderResourceView* lpd3dTexture = m_BranchImageInstance.GetTextureReference().GetD3DTexture();
 
-		// set texture map
-		if ((lpd3dTexture = m_BranchImageInstance.GetTextureReference().GetD3DTexture()))
+		if (lpd3dTexture)
 			SHADERMANAGER.SetShaderResource(0, lpd3dTexture);
 
 		if (m_pGeometryCache->m_sBranches.m_usVertexCount > 0)
 		{
-			// activate the branch vertex buffer
 			SHADERMANAGER.SetVertexBuffer(0, m_pBranchVertexBuffer, sizeof(SBranchVertex));
-			// set the index buffer
 			SHADERMANAGER.SetIndexBuffer(m_pBranchIndexBuffer);
 		}
 	}
@@ -187,21 +172,21 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
 	SHADERMANAGER.SetShaderResource(0, m_CompositeImageInstance.GetTextureReference().GetD3DTexture());
 	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 
-	// 	SetupFrondForTreeType();
 	{
-		// update the frond geometry for CPU wind
 #ifdef WRAPPER_USE_CPU_WIND
 		m_pSpeedTree->GetGeometry(*m_pGeometryCache, SpeedTree_FrondGeometry);
+
 		if (m_pGeometryCache->m_sFronds.m_usNumStrips > 0)
 		{
 			D3D11_MAPPED_SUBRESOURCE mappedResource;
+
 			if (SUCCEEDED(ms_pContext->Map(m_pFrondVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
 				SBranchVertex* pVertexBuffer = (SBranchVertex*)mappedResource.pData;
+
 				for (UINT i = 0; i < m_unFrondVertexCount; ++i)
-				{
-					memcpy(&(pVertexBuffer[i].m_vPosition), &(m_pGeometryCache->m_sFronds.m_pCoords[i * 3]), 3 * sizeof(float));
-				}
+					memcpy(&pVertexBuffer[i].m_vPosition, &m_pGeometryCache->m_sFronds.m_pCoords[i * 3], 3 * sizeof(float));
+
 				ms_pContext->Unmap(m_pFrondVertexBuffer, 0);
 			}
 		}
@@ -212,12 +197,11 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
 
 		if (m_pGeometryCache->m_sFronds.m_usVertexCount > 0)
 		{
-			// activate the frond vertex buffer
 			SHADERMANAGER.SetVertexBuffer(0, m_pFrondVertexBuffer, sizeof(SBranchVertex));
-			// set the index buffer
 			SHADERMANAGER.SetIndexBuffer(m_pFrondIndexBuffer);
 		}
 	}
+
 	RenderFronds();
 
 	SHADERMANAGER.BeginSpeedTreeLeaf();
@@ -226,38 +210,26 @@ void CSpeedTreeWrapper::OnRenderPCBlocker()
 	RenderLeaves();
 	EndLeafForTreeType();
 
-	// Billboards use particle shader
-	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);  // White - billboards use per-vertex color
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 	SHADERMANAGER.BeginParticle();
 	RenderBillboards();
 
 	EndShaderSpeedTreeRender();
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
-	SHADERMANAGER.SetAlphaTestEnabled(bSavedAlphaTestEnable);
-	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, dwAlphaBlendEnable);
-	SHADERMANAGER.SetLightingEnabled(bSavedLighting);
-	SHADERMANAGER.SetFogEnabled(bSavedFogEnable);
+	SHADERMANAGER.PopState();
 }
 
 void CSpeedTreeWrapper::OnRender()
 {
 	if (ms_dwBranchVertexShader == 0)
-	{
 		ms_dwBranchVertexShader = LoadBranchShader(ms_pDevice);
-		//LogBox("Vertex Shader not assigned. You must call CSpeedTreeWrapper::VSSetShader for this");
-	}
 
 	if (ms_dwLeafVertexShader == 0)
-	{
 		ms_dwLeafVertexShader = LoadLeafShader(ms_pDevice);
-		//LogBox("Vertex Shader not assigned. You must call CSpeedTreeWrapper::VSSetShader for this");
-	}
 
 	CSpeedTreeForestDX11::Instance().UpdateSystem(ELTimer_GetMSec() / 1000.0f);
 
 	m_pSpeedTree->SetLodLevel(1.0f);
-	//Advance();
 
 	CCamera* pCamera = CCameraManager::Instance().GetCurrentCamera();
 	if (!pCamera)
@@ -265,16 +237,14 @@ void CSpeedTreeWrapper::OnRender()
 
 	CSpeedTreeForestDX11::Instance().UpdateCompundMatrix(pCamera->GetEye(), ms_matView, ms_matProj);
 
+	SHADERMANAGER.PushState();
+
 	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSU, ADDRESS_WRAP);
 	SHADERMANAGER.SetSamplerState(1, SAMPLER_ADDRESSV, ADDRESS_WRAP);
-
-	bool bSavedLighting = SHADERMANAGER.GetLightingEnabled();
-	SHADERMANAGER.SetLightingEnabled(true);  // SpeedTree shader handles lighting
-	bool bSavedAlphaTestEnable = SHADERMANAGER.GetAlphaTestEnabled();
+	SHADERMANAGER.SetLightingEnabled(true);
 	SHADERMANAGER.SetAlphaTestEnabled(true);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_FRONT);
-	bool bSavedFogEnable = SHADERMANAGER.GetFogEnabled();
-	SHADERMANAGER.SetFogEnabled(true);  // SpeedTree shader handles fog
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_FRONT);
+	SHADERMANAGER.SetFogEnabled(true);
 
 	BeginShaderSpeedTreeRender(1.0f);
 
@@ -293,17 +263,13 @@ void CSpeedTreeWrapper::OnRender()
 	RenderLeaves();
 	EndLeafForTreeType();
 
-	// Billboards use particle shader
-	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);  // White - billboards use per-vertex color
+	SHADERMANAGER.SetParticleColor(0xFFFFFFFF);
 	SHADERMANAGER.BeginParticle();
 	RenderBillboards();
 
 	EndShaderSpeedTreeRender();
 
-	SHADERMANAGER.SetLightingEnabled(bSavedLighting);
-	SHADERMANAGER.SetAlphaTestEnabled(bSavedAlphaTestEnable);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE);
-	SHADERMANAGER.SetFogEnabled(bSavedFogEnable);
+	SHADERMANAGER.PopState();
 }
 
 ///////////////////////////////////////////////////////////////////////

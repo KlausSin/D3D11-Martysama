@@ -189,37 +189,32 @@ void CLensFlare::Compute(const Vector3 & c_rv3LightDirection)
 
 void CLensFlare::DrawBeforeFlare()
 {
-    if (!m_bFlareVisible || !m_bEnabled || !m_bShowMainFlare)
-        return;
+	if (!m_bFlareVisible || !m_bEnabled || !m_bShowMainFlare)
+		return;
 
 	if (m_SunFlareImageInstance.IsEmpty())
 		return;
 
+	SHADERMANAGER.PushState();
+
 	Matrix matProj;
 	MatrixOrthoOffCenterRH(&matProj, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 1.0f);
-	SHADERMANAGER.SaveTransform(MATRIX_PROJECTION, &matProj);
-	SHADERMANAGER.SaveTransform(MATRIX_VIEW, &ms_matIdentity);
+
+	SHADERMANAGER.SetMatrix(MATRIX_PROJECTION, &matProj);
+	SHADERMANAGER.SetMatrix(MATRIX_VIEW, &ms_matIdentity);
 
 	Matrix matWorld;
 	MatrixTranslation(&matWorld, m_afFlarePos[0], m_afFlarePos[1], 0.0f);
 	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &matWorld);
 
-	// Save and set lighting state
-	m_bSavedLighting = SHADERMANAGER.GetLightingEnabled();
 	SHADERMANAGER.SetLightingEnabled(false);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE, FALSE);					// glDisable(GL_DEPTH_TEST);
-	SHADERMANAGER.SavePipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
-	SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE);			// glDisable(GL_CULL_FACE);
-	// RS_SHADEMODE removed - not needed in DX11
-
-	// Save and set alpha test state
-	m_bSavedAlphaTest = SHADERMANAGER.GetAlphaTestEnabled();
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, FALSE);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHWRITEMASK, FALSE);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 	SHADERMANAGER.SetAlphaTestEnabled(false);
-
-	SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE);			// glEnable(GL_BLEND);
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_INVSRCALPHA);
 
 	float fAspectRatio = ms_Viewport.Width / float(ms_Viewport.Height);
 	float fHeight = m_fSunSize * fAspectRatio;
@@ -266,23 +261,7 @@ void CLensFlare::DrawBeforeFlare()
 		SHADERMANAGER.DrawDynamic(TOPOLOGY_TRIANGLESTRIP, 2, vertices, sizeof(SVertex));
 	}
 
-	// Restore lighting state
-	SHADERMANAGER.SetLightingEnabled(m_bSavedLighting);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE); // glDisable(GL_DEPTH_TEST);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHWRITEMASK);
-	SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE); // glDisable(GL_CULL_FACE);
-	// RS_SHADEMODE removed - not needed in DX11
-
-	// Restore alpha test state
-	SHADERMANAGER.SetAlphaTestEnabled(m_bSavedAlphaTest);
-
-	SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE); // glEnable(GL_BLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
-
-	SHADERMANAGER.RestoreTransform(MATRIX_VIEW);
-	SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
+	SHADERMANAGER.PopState();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -319,56 +298,30 @@ void CLensFlare::SetMainFlare(string strSunFile, float fSunSize)
 
 void CLensFlare::DrawFlare()
 {
-	if (m_bEnabled && m_bFlareVisible && m_bDrawFlare && m_fAfterBright != 0.0f)
-	{
-        //glPushAttrib(GL_ENABLE_BIT);
-		// Save and set lighting state
-		m_bSavedLightingFlare = SHADERMANAGER.GetLightingEnabled();
-		SHADERMANAGER.SetLightingEnabled(false);
+	if (!m_bEnabled || !m_bFlareVisible || !m_bDrawFlare || m_fAfterBright == 0.0f)
+		return;
 
-		SHADERMANAGER.SavePipelineState(PSTATE_DEPTHENABLE, FALSE); // glDisable(GL_DEPTH_TEST);
-		SHADERMANAGER.SavePipelineState(PSTATE_CULLMODE, CULL_NONE); // glDisable(GL_CULL_FACE);
+	SHADERMANAGER.PushState();
 
-		// Save and set alpha test state
-		m_bSavedAlphaTestFlare = SHADERMANAGER.GetAlphaTestEnabled();
-		SHADERMANAGER.SetAlphaTestEnabled(false);
+	SHADERMANAGER.SetLightingEnabled(false);
+	SHADERMANAGER.SetPipelineState(PSTATE_DEPTHENABLE, FALSE);
+	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
+	SHADERMANAGER.SetAlphaTestEnabled(false);
+	SHADERMANAGER.SetPipelineState(PSTATE_BLENDENABLE, TRUE);
 
-		SHADERMANAGER.SavePipelineState(PSTATE_BLENDENABLE, TRUE); // glEnable(GL_BLEND);
+	Matrix matProj;
+	MatrixOrthoOffCenterRH(&matProj, 0.0f, ms_Viewport.Width, ms_Viewport.Height, 0.0f, -1.0f, 1.0f);
 
-		Matrix matProj;
-		MatrixOrthoOffCenterRH(&matProj, 0.0f, ms_Viewport.Width, ms_Viewport.Height, 0.0f, -1.0f, 1.0f);
-		SHADERMANAGER.SaveTransform(MATRIX_PROJECTION, &matProj);
-		SHADERMANAGER.SaveTransform(MATRIX_VIEW, &ms_matIdentity);
+	SHADERMANAGER.SetMatrix(MATRIX_PROJECTION, &matProj);
+	SHADERMANAGER.SetMatrix(MATRIX_VIEW, &ms_matIdentity);
+	SHADERMANAGER.SetMatrix(MATRIX_WORLD, &ms_matIdentity);
 
-		SHADERMANAGER.SetMatrix(MATRIX_WORLD, &ms_matIdentity);
-		//glMatrixMode(GL_MODELVIEW);
-		//glLoadIdentity();
+	DrawAfterFlare();
 
-		//glDisable(GL_TEXTURE_2D);
-		DrawAfterFlare();
+	m_cFlare.Draw(m_fAfterBright, ms_Viewport.Width, ms_Viewport.Height,
+		static_cast<int>(m_afFlareWinPos[0]), static_cast<int>(m_afFlareWinPos[1]));
 
-		//glEnable(GL_TEXTURE_2D);
-		m_cFlare.Draw(m_fAfterBright,
-					  ms_Viewport.Width,
-					  ms_Viewport.Height,
-					  static_cast<int>(m_afFlareWinPos[0]),
-					  static_cast<int>(m_afFlareWinPos[1]));
-
-		// Restore lighting state
-		SHADERMANAGER.SetLightingEnabled(m_bSavedLightingFlare);
-
-		SHADERMANAGER.RestorePipelineState(PSTATE_DEPTHENABLE); // glDisable(GL_DEPTH_TEST);
-		SHADERMANAGER.RestorePipelineState(PSTATE_CULLMODE); // glDisable(GL_CULL_FACE);
-		SHADERMANAGER.RestorePipelineState(PSTATE_BLENDENABLE); // glEnable(GL_BLEND);
-
-		// Restore alpha test state
-		SHADERMANAGER.SetAlphaTestEnabled(m_bSavedAlphaTestFlare);
-
-		SHADERMANAGER.RestoreTransform(MATRIX_PROJECTION);
-		SHADERMANAGER.RestoreTransform(MATRIX_VIEW);
-		//glDisable(GL_TEXTURE_2D);
-        //glPopAttrib();
-	}
+	SHADERMANAGER.PopState();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -603,25 +556,26 @@ void CFlare::Init(std::string strPath)
 //	CFlare::Draw
 void CFlare::Draw(float fBrightScale, int nWidth, int nHeight, int nX, int nY)
 {
-	SHADERMANAGER.SavePipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
-	SHADERMANAGER.SavePipelineState(PSTATE_DESTBLEND, BLEND_ONE);
+	SHADERMANAGER.PushState();
+
+	SHADERMANAGER.SetPipelineState(PSTATE_SRCBLEND, BLEND_SRCALPHA);
+	SHADERMANAGER.SetPipelineState(PSTATE_DESTBLEND, BLEND_ONE);
+	SHADERMANAGER.SetShaderResource(1, nullptr);
 
 	float fDX = float(nX) - float(nWidth) / 2.0f;
 	float fDY = float(nY) - float(nHeight) / 2.0f;
 
-	SHADERMANAGER.SetShaderResource(1, NULL);
-
-
-	for (unsigned int i = 0; i < m_vFlares.size(); i++)
+	for (unsigned int i = 0; i < m_vFlares.size(); ++i)
 	{
 		float fCenterX = float(nX) - (m_vFlares[i]->m_fPosition + 1.0f) * fDX;
 		float fCenterY = float(nY) - (m_vFlares[i]->m_fPosition + 1.0f) * fDY;
 		float fW = m_vFlares[i]->m_fWidth;
 
-		Color flareColor(m_vFlares[i]->m_pColor[0] * fBrightScale,
-						   m_vFlares[i]->m_pColor[1] * fBrightScale,
-						   m_vFlares[i]->m_pColor[2] * fBrightScale,
-						   m_vFlares[i]->m_pColor[3] * fBrightScale);
+		Color flareColor(
+			m_vFlares[i]->m_pColor[0] * fBrightScale,
+			m_vFlares[i]->m_pColor[1] * fBrightScale,
+			m_vFlares[i]->m_pColor[2] * fBrightScale,
+			m_vFlares[i]->m_pColor[3] * fBrightScale);
 
 		CGraphicTexture* pFlareTexture = m_vFlares[i]->m_imageInstance.GetTexturePointer();
 		if (!pFlareTexture)
@@ -631,41 +585,27 @@ void CFlare::Draw(float fBrightScale, int nWidth, int nHeight, int nX, int nY)
 
 		TVertex vertices[4];
 
-		vertices[0].u = 0.0f;
-		vertices[0].v = 0.0f;
-		vertices[0].x = fCenterX - fW;
-		vertices[0].y = fCenterY - fW;
-		vertices[0].z = 0.0f;
+		vertices[0].u = 0.0f; vertices[0].v = 0.0f;
+		vertices[0].x = fCenterX - fW; vertices[0].y = fCenterY - fW; vertices[0].z = 0.0f;
 		vertices[0].color = flareColor;
 
-		vertices[1].u = 0.0f;
-		vertices[1].v = 1.0f;
-		vertices[1].x = fCenterX - fW;
-		vertices[1].y = fCenterY + fW;
-		vertices[1].z = 0.0f;
+		vertices[1].u = 0.0f; vertices[1].v = 1.0f;
+		vertices[1].x = fCenterX - fW; vertices[1].y = fCenterY + fW; vertices[1].z = 0.0f;
 		vertices[1].color = flareColor;
 
-		vertices[2].u = 1.0f;
-		vertices[2].v = 0.0f;
-		vertices[2].x = fCenterX + fW;
-		vertices[2].y = fCenterY - fW;
-		vertices[2].z = 0.0f;
+		vertices[2].u = 1.0f; vertices[2].v = 0.0f;
+		vertices[2].x = fCenterX + fW; vertices[2].y = fCenterY - fW; vertices[2].z = 0.0f;
 		vertices[2].color = flareColor;
 
-		vertices[3].u = 1.0f;
-		vertices[3].v = 1.0f;
-		vertices[3].x = fCenterX + fW;
-		vertices[3].y = fCenterY + fW;
-		vertices[3].z = 0.0f;
+		vertices[3].u = 1.0f; vertices[3].v = 1.0f;
+		vertices[3].x = fCenterX + fW; vertices[3].y = fCenterY + fW; vertices[3].z = 0.0f;
 		vertices[3].color = flareColor;
 
-		// Bind UI shader for screen-space rendering
 		SHADERMANAGER.BeginUI();
 		SHADERMANAGER.CommitChanges();
 		SHADERMANAGER.DrawDynamic(TOPOLOGY_TRIANGLESTRIP, 2, vertices, sizeof(TVertex));
 	}
 
-	SHADERMANAGER.RestorePipelineState(PSTATE_SRCBLEND);
-	SHADERMANAGER.RestorePipelineState(PSTATE_DESTBLEND);
+	SHADERMANAGER.PopState();
 }
 //martysama0134's dcf42890919f0da1c0e6dbb7f15bc7ec

@@ -32,22 +32,9 @@ void CGrannyMaterial::ResetRenderStateCache()
 
 void CGrannyMaterial::RestoreRenderStateCache()
 {
-	if (ms_bSpecularStateApplied)
-	{
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSU);
-		SHADERMANAGER.RestoreSamplerState(1, SAMPLER_ADDRESSV);
+	ms_bSpecularStateApplied = false;
+	ms_bTwoSideStateApplied = false;
 
-		ms_bSpecularStateApplied = false;
-	}
-
-	// Restore two-sided state if it was applied
-	if (ms_bTwoSideStateApplied)
-	{
-		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_FRONT);
-		ms_bTwoSideStateApplied = false;
-	}
-
-	// Clear texture cache
 	ms_pLastTexture[0] = nullptr;
 	ms_pLastTexture[1] = nullptr;
 }
@@ -79,12 +66,14 @@ void CGrannyMaterial::TranslateSpecularMatrix(float fAddX, float fAddY, float fA
 void CGrannyMaterial::ApplyRenderState()
 {
 	assert(m_pfnApplyRenderState!=NULL && "CGrannyMaterial::SavePipelineState");
+	SHADERMANAGER.PushState();
 	(this->*m_pfnApplyRenderState)();
 }
 
 void CGrannyMaterial::RestorePipelineState()
 {
 	assert(m_pfnRestoreRenderState!=NULL && "CGrannyMaterial::RestorePipelineState");
+	SHADERMANAGER.PopState();
 	(this->*m_pfnRestoreRenderState)();
 }
 
@@ -368,7 +357,7 @@ void CGrannyMaterial::__ApplyDiffuseRenderState()
 
 	if (m_bTwoSideRender)
 	{
-		m_dwLastCullRenderStateForTwoSideRendering = SHADERMANAGER.GetPipelineState(PSTATE_CULLMODE);
+		//m_dwLastCullRenderStateForTwoSideRendering = SHADERMANAGER.GetPipelineState(PSTATE_CULLMODE);
 		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 	}
 
@@ -376,10 +365,10 @@ void CGrannyMaterial::__ApplyDiffuseRenderState()
 
 void CGrannyMaterial::__RestoreDiffuseRenderState()
 {
-	if (m_bTwoSideRender)
-	{
-		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, m_dwLastCullRenderStateForTwoSideRendering);
-	}
+	//if (m_bTwoSideRender)
+	//{
+	//	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, m_dwLastCullRenderStateForTwoSideRendering);
+	//}
 }
 
 void CGrannyMaterial::__ApplySpecularRenderState()
@@ -430,24 +419,24 @@ void CGrannyMaterial::__ApplySpecularRenderState()
 
 	if (m_bTwoSideRender)
 	{
-		m_dwLastCullRenderStateForTwoSideRendering = SHADERMANAGER.GetPipelineState(PSTATE_CULLMODE);
+		//m_dwLastCullRenderStateForTwoSideRendering = SHADERMANAGER.GetPipelineState(PSTATE_CULLMODE);
 		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, CULL_NONE);
 	}
 }
 
 void CGrannyMaterial::__RestoreSpecularRenderState()
 {
-	if (TRUE == SHADERMANAGER.GetPipelineState(PSTATE_BLENDENABLE))
-	{
-		__RestoreDiffuseRenderState();
-		return;
-	}
+	//if (TRUE == SHADERMANAGER.GetPipelineState(PSTATE_BLENDENABLE))
+	//{
+	//	__RestoreDiffuseRenderState();
+	//	return;
+	//}
 
 
-	if (m_bTwoSideRender)
-	{
-		SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, m_dwLastCullRenderStateForTwoSideRendering);
-	}
+	//if (m_bTwoSideRender)
+	//{
+	//	SHADERMANAGER.SetPipelineState(PSTATE_CULLMODE, m_dwLastCullRenderStateForTwoSideRendering);
+	//}
 }
 
 void CGrannyMaterial::CreateSphereMap(UINT uMapIndex, const char* c_szSphereMapImageFileName)
