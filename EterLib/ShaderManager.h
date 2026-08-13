@@ -5,7 +5,7 @@
  * DX11 Unified Shader System (Shader Model 5.0)
  *
  * Dedicated shaders
- * for each rendering type. All shaders are built-in (embedded HLSL).
+ * for each rendering type. HLSL is loaded from FoxFS/CEterPackManager and CSO is cached on disk.
  *
  * Features:
  * - Texture stage blending (MODULATE, SELECTARG1, etc.)
@@ -668,7 +668,7 @@ public:
 	//--------------------------------------------------------------------
 	// GPU Compute Shader Support
 	//--------------------------------------------------------------------
-	bool CompileComputeShader(EComputeShader type, const char* szCSCode, const char* szEntryPoint = "CSMain");
+	bool CompileComputeShader(EComputeShader type, const char* szCSFile, const char* szEntryPoint = "CSMain");
 	void DispatchCompute(EComputeShader type, UINT groupsX, UINT groupsY = 1, UINT groupsZ = 1);
 	bool CreateStructuredBuffer(UINT elementSize, UINT elementCount, bool bCpuWrite, GpuBuffer& outBuffer);
 	bool CreateRawVertexUAVBuffer(UINT byteWidth, GpuBuffer& outBuffer);
@@ -888,10 +888,10 @@ public:
 private:
 	// Shader compilation with caching
 	bool CompileAllShaders();
-	bool CompileShader(EShaderType type, const char* szVSCode, const char* szPSCode);
+	bool CompileShader(EShaderType type, const char* szVSFile, const char* szPSFile);
 
 	// Shader cache helpers
-	static UINT ComputeShaderHash(const char* szVSCode, const char* szPSCode);
+	static UINT ComputeShaderHash(const void* pVSData, size_t vsSize, const void* pPSData, size_t psSize);
 	bool LoadShaderFromCache(EShaderType type, UINT hash, ID3DBlob** ppVSBlob, ID3DBlob** ppPSBlob);
 	bool SaveShaderToCache(EShaderType type, UINT hash, ID3DBlob* pVSBlob, ID3DBlob* pPSBlob);
 	static const char* GetShaderCachePath();
